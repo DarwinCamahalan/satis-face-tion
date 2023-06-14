@@ -155,7 +155,7 @@ def show_feedback():
         if validate_survey():
             # Prepare the survey data
             survey_data = {
-                "timestamp": str(datetime.date.today()),
+                "date": str(datetime.date.today()),
                 "id": get_next_survey_id(),
                 "answers": {
                     "Question 1": "Satisfied" if satisfied1.get() == 1 else "Unsatisfied",
@@ -244,15 +244,19 @@ def show_analytics():
     canvas = FigureCanvasTkAgg(fig, master=content_frame)
     canvas.draw()
     canvas.get_tk_widget().pack(fill=BOTH, expand=True)
-
+    plt.close()
     content_frame.mainloop()
 
+
+
+
 def show_data():
-    global content_frame, survey_widgets, canvas  # Declare content_frame and survey_widgets as global variables
+    global content_frame, survey_widgets, canvas, current_view  # Declare content_frame, survey_widgets, and current_view as global variables
     remove_survey_widgets()  # Remove any existing survey widgets
     if canvas is not None:
         canvas.get_tk_widget().destroy()
     content_label.config(text="Data Page")
+
     # Load survey data from the JSON file
     try:
         with open("survey_answer.json", "r") as file:
@@ -265,44 +269,160 @@ def show_data():
         messagebox.showinfo("No Data", "No survey data available.")
         return
 
-    # Create a dictionary to store the counts for each month
-    month_counts = defaultdict(lambda: {'Satisfied': 0, 'Unsatisfied': 0})
+    # Create a global variable to keep track of the current view
+    current_view = 'month'
 
-    # Process survey data and count satisfied/unsatisfied customers by month
+    def update_plot(view, data):
+        global current_view, canvas
+
+        if view == 'month':
+            plot_data_by_week(data)
+            current_view = 'week'
+        elif view == 'week':
+            month = data[0]
+            selected_week = data[1]
+            plot_data_by_day(month, selected_week)
+            current_view = 'day'
+
+    
+    # Create a dictionary to store the counts for each month, week, and day
+    month_counts = defaultdict(lambda: {'Satisfied': 0, 'Unsatisfied': 0})
+    # Create a dictionary to store the counts for each month, week, and day
+    week_counts = defaultdict(lambda: defaultdict(lambda: {'Satisfied': 0, 'Unsatisfied': 0}))
+    day_counts = defaultdict(lambda: {'Satisfied': 0, 'Unsatisfied': 0})
+
+    # Process survey data and count satisfied/unsatisfied customers by month, week, and day
     for entry in survey_data:
-        timestamp = entry.get('timestamp')
-        month = int(timestamp.split('-')[1])
+        date = entry.get('date')
+        month = int(date.split('-')[1])
+        week = str(datetime.datetime.strptime(date, '%Y-%m-%d').date().isocalendar()[1])  # Convert week to string key
+        day = int(date.split('-')[2])
         answers = entry.get('answers')
         for question, response in answers.items():
             if response == 'Satisfied':
                 month_counts[month]['Satisfied'] += 1
+                week_counts[month][week]['Satisfied'] += 1
+                day_counts[day]['Satisfied'] += 1
             elif response == 'Unsatisfied':
                 month_counts[month]['Unsatisfied'] += 1
+                week_counts[month][week]['Unsatisfied'] += 1  # Use week as a key within the month
+                day_counts[day]['Unsatisfied'] += 1
 
-    # Extract months and counts for plotting
-    months = list(month_counts.keys())
-    month_names = [calendar.month_name[month] for month in months]
-    satisfied_counts = [month_counts[month]['Satisfied'] for month in months]
-    unsatisfied_counts = [month_counts[month]['Unsatisfied'] for month in months]
 
-    # Plot the bar graph
-    plt.figure(figsize=(8, 6))
-    x_pos = np.arange(len(months))
-    plt.bar(x_pos - 0.2, satisfied_counts, 0.4, label='Satisfied', color='#00b7ff')
-    plt.bar(x_pos + 0.2, unsatisfied_counts, 0.4, label='Unsatisfied', color='#ff2929')
+    # Define the plot functions
+    def plot_data_by_month():
+        global canvas
+        if canvas is not None:
+            canvas.get_tk_widget().destroy()
+        # Extract months and counts for plotting
+        months = list(month_counts.keys())
+        month_names = [calendar.month_name[month] for month in months]
+        satisfied_counts = [month_counts[month]['Satisfied'] for month in months]
+        unsatisfied_counts = [month_counts[month]['Unsatisfied'] for month in months]
 
-    # Set the x-axis tick positions and labels
-    plt.xticks(x_pos, month_names)
+        # Plot the bar graph by month
+        plt.figure(figsize=(8, 6))
+        x_pos = np.arange(len(months))
+        plt.bar(x_pos - 0.2, satisfied_counts, 0.4, label='Satisfied', color='#00b7ff')
+        plt.bar(x_pos + 0.2, unsatisfied_counts, 0.4, label='Unsatisfied', color='#ff2929')
+        plt.xticks(x_pos, month_names)
 
-    plt.xlabel('Month')
-    plt.ylabel('Number of Surveys')
-    plt.title('Customer Satisfaction by Month')
-    plt.legend()
+        plt.xlabel('Month')
+        plt.ylabel('Number of Surveys')
+        plt.title('Customer Satisfaction by Month')
+        plt.legend()
 
-    # Create a Tkinter canvas to display the plot
-    canvas = FigureCanvasTkAgg(plt.gcf(), master=content_frame)
-    canvas.draw()
-    canvas.get_tk_widget().pack(fill=BOTH, expand=True)
+        # Create a Tkinter canvas to display the plot
+        canvas = FigureCanvasTkAgg(plt.gcf(), master=content_frame)
+        canvas.draw()
+        canvas.get_tk_widget().pack(fill=BOTH, expand=True)
+        plt.close()
+
+    def plot_data_by_week(month):
+        global canvas
+        if canvas is not None:
+            canvas.get_tk_widget().destroy()
+
+        month_data = week_counts[month]
+
+        # Extract weeks and counts for plotting
+        weeks = list(month_data.keys())
+        week_names = ['Week {}'.format(week) for week in weeks]
+        satisfied_counts = [month_data[week]['Satisfied'] for week in weeks]
+        unsatisfied_counts = [month_data[week]['Unsatisfied'] for week in weeks]
+
+        # Plot the bar graph by week
+        plt.figure(figsize=(8, 6))
+        x_pos = np.arange(len(weeks))
+        plt.bar(x_pos - 0.2, satisfied_counts, 0.4, label='Satisfied', color='#00b7ff')
+        plt.bar(x_pos + 0.2, unsatisfied_counts, 0.4, label='Unsatisfied', color='#ff2929')
+        plt.xticks(x_pos, week_names)
+
+        plt.xlabel('Week')
+        plt.ylabel('Number of Surveys')
+        plt.title('Customer Satisfaction by Week - {}'.format(calendar.month_name[month]))
+        plt.legend()
+
+        # Create a Tkinter canvas to display the plot
+        canvas = FigureCanvasTkAgg(plt.gcf(), master=content_frame)
+        canvas.draw()
+        canvas.get_tk_widget().pack(fill=BOTH, expand=True)
+        plt.close()
+
+
+
+    def plot_data_by_day(month, week):
+        global canvas
+        if canvas is not None:
+            canvas.get_tk_widget().destroy()
+
+        week_data = week_counts[month][week]
+
+        # Extract days and counts for plotting
+        days = list(week_data.keys())
+        day_names = ['Day {}'.format(day) for day in days]
+        satisfied_counts = [week_data[day]['Satisfied'] for day in days]
+        unsatisfied_counts = [week_data[day]['Unsatisfied'] for day in days]
+
+        # Plot the bar graph by day
+        plt.figure(figsize=(8, 6))
+        x_pos = np.arange(len(days))
+        plt.bar(x_pos - 0.2, satisfied_counts, 0.4, label='Satisfied', color='#00b7ff')
+        plt.bar(x_pos + 0.2, unsatisfied_counts, 0.4, label='Unsatisfied', color='#ff2929')
+        plt.xticks(x_pos, day_names)
+
+        plt.xlabel('Day')
+        plt.ylabel('Number of Surveys')
+        plt.title('Customer Satisfaction by Day - Week {}'.format(week))
+        plt.legend()
+
+        # Create a Tkinter canvas to display the plot
+        canvas = FigureCanvasTkAgg(plt.gcf(), master=content_frame)
+        canvas.draw()
+        canvas.get_tk_widget().pack(fill=BOTH, expand=True)
+        plt.close()
+
+
+    def on_month_click(event):
+        if event.xdata is not None:
+            selected_month = int(event.xdata) + 1
+            if 1 <= selected_month <= 12:
+                update_plot(view=current_view, data=selected_month)
+
+    def on_week_click(event):
+        if event.xdata is not None:
+            selected_week = int(event.xdata) + 1
+            if 1 <= selected_week <= 53:
+                update_plot(view=current_view, data=selected_week)
+
+    # Plot the data by month by default
+    plot_data_by_month()
+
+    # Add a click event handler to the canvas to capture month/week clicks
+    if current_view == 'month':
+        canvas.mpl_connect('button_press_event', on_month_click)
+    elif current_view == 'week':
+        canvas.mpl_connect('button_press_event', on_week_click)
 
 
 def show_start():
