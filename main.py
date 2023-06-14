@@ -1,13 +1,48 @@
 from tkinter import *
-from PIL import Image, ImageTk
 import json
 import datetime
+import calendar
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-import subprocess
+from collections import defaultdict
+import numpy as np
 from tkinter import messagebox
 
 canvas = None 
+
+# Set font for the whole application
+font_style = ("Segoe UI Semibold", 11)
+
+# Create the main window
+main = Tk()
+main.title("satisFACEtion")
+
+# Set window size
+main.geometry("1360x768")
+# main.eval('tk::PlaceWindow . center')
+
+# Configure main window background color
+main.configure(background="white")
+
+content_frame = None  # Declare content_frame as a global variable
+survey_widgets = []  # List to store survey question widgets
+
+# Create a frame to hold the content
+content_frame = Frame(main, bg="white")
+content_frame.grid(row=0, column=1, padx=(50, 0), pady=(20, 0), sticky="nsew")
+
+# Create a label inside the content frame
+content_label = Label(content_frame, text="Start Page", font=font_style)
+content_label.configure(bg="white")  # Remove this line to have no background color
+content_label.pack()
+
+
+# Configure grid weights to allow expansion
+main.grid_columnconfigure(0, weight=0)
+main.grid_columnconfigure(1, weight=1)
+main.grid_rowconfigure(0, weight=1)
+
+
 # Function to get the next survey ID
 def get_next_survey_id():
     survey_data = []
@@ -30,23 +65,6 @@ def get_next_survey_id():
     # Return the next survey ID by incrementing the last survey ID
     return last_survey_id + 1
 
-
-# Set font for the whole application
-font_style = ("Segoe UI Semibold", 11)
-
-# Create the main window
-main = Tk()
-main.title("satisFACEtion")
-
-# Set window size
-main.geometry("1360x768")
-# main.eval('tk::PlaceWindow . center')
-
-# Configure main window background color
-main.configure(background="white")
-
-content_frame = None  # Declare content_frame as a global variable
-survey_widgets = []  # List to store survey question widgets
 
 def remove_survey_widgets():
     for widget in survey_widgets:
@@ -137,7 +155,7 @@ def show_feedback():
         if validate_survey():
             # Prepare the survey data
             survey_data = {
-                "timestamp": str(datetime.datetime.now()),
+                "timestamp": str(datetime.date.today()),
                 "id": get_next_survey_id(),
                 "answers": {
                     "Question 1": "Satisfied" if satisfied1.get() == 1 else "Unsatisfied",
@@ -178,6 +196,8 @@ def show_feedback():
 def show_analytics():
     global content_frame, survey_widgets, canvas
     remove_survey_widgets()
+    if canvas is not None:
+        canvas.get_tk_widget().destroy()
     content_label.config(text="Analytics Page")
     try:
         with open("survey_answer.json", "r") as file:
@@ -228,11 +248,62 @@ def show_analytics():
     content_frame.mainloop()
 
 def show_data():
-    global content_frame, survey_widgets, canvas   # Declare content_frame and survey_widgets as global variables
+    global content_frame, survey_widgets, canvas  # Declare content_frame and survey_widgets as global variables
     remove_survey_widgets()  # Remove any existing survey widgets
     if canvas is not None:
         canvas.get_tk_widget().destroy()
     content_label.config(text="Data Page")
+    # Load survey data from the JSON file
+    try:
+        with open("survey_answer.json", "r") as file:
+            survey_data = json.load(file)
+    except (FileNotFoundError, json.JSONDecodeError):
+        messagebox.showerror("Error", "Failed to load survey data.")
+        return
+
+    if not survey_data:
+        messagebox.showinfo("No Data", "No survey data available.")
+        return
+
+    # Create a dictionary to store the counts for each month
+    month_counts = defaultdict(lambda: {'Satisfied': 0, 'Unsatisfied': 0})
+
+    # Process survey data and count satisfied/unsatisfied customers by month
+    for entry in survey_data:
+        timestamp = entry.get('timestamp')
+        month = int(timestamp.split('-')[1])
+        answers = entry.get('answers')
+        for question, response in answers.items():
+            if response == 'Satisfied':
+                month_counts[month]['Satisfied'] += 1
+            elif response == 'Unsatisfied':
+                month_counts[month]['Unsatisfied'] += 1
+
+    # Extract months and counts for plotting
+    months = list(month_counts.keys())
+    month_names = [calendar.month_name[month] for month in months]
+    satisfied_counts = [month_counts[month]['Satisfied'] for month in months]
+    unsatisfied_counts = [month_counts[month]['Unsatisfied'] for month in months]
+
+    # Plot the bar graph
+    plt.figure(figsize=(8, 6))
+    x_pos = np.arange(len(months))
+    plt.bar(x_pos - 0.2, satisfied_counts, 0.4, label='Satisfied', color='#00b7ff')
+    plt.bar(x_pos + 0.2, unsatisfied_counts, 0.4, label='Unsatisfied', color='#ff2929')
+
+    # Set the x-axis tick positions and labels
+    plt.xticks(x_pos, month_names)
+
+    plt.xlabel('Month')
+    plt.ylabel('Number of Surveys')
+    plt.title('Customer Satisfaction by Month')
+    plt.legend()
+
+    # Create a Tkinter canvas to display the plot
+    canvas = FigureCanvasTkAgg(plt.gcf(), master=content_frame)
+    canvas.draw()
+    canvas.get_tk_widget().pack(fill=BOTH, expand=True)
+
 
 def show_start():
     global content_frame, survey_widgets, canvas  # Declare content_frame and survey_widgets as global variables
@@ -294,24 +365,8 @@ satisfaction_data_btn = Button(button_frame, text="Satisfaction Data", command=s
 satisfaction_data_btn.configure(bg="#302d2d", fg="white", highlightbackground="white", borderwidth=0, anchor="w")
 satisfaction_data_btn.pack(padx=(25, 25), pady=(20, 40), fill="x")
 
-
-
-# Create a frame to hold the content
-content_frame = Frame(main, bg="white")
-content_frame.grid(row=0, column=1, padx=(50, 0), pady=(20, 0), sticky="nsew")
-
-# Create a label inside the content frame
-content_label = Label(content_frame, text="Start Page", font=font_style)
-content_label.configure(bg="white")  # Remove this line to have no background color
-content_label.pack()
-
 # Show the initial content (Start Page)
 show_start()
-
-# Configure grid weights to allow expansion
-main.grid_columnconfigure(0, weight=0)
-main.grid_columnconfigure(1, weight=1)
-main.grid_rowconfigure(0, weight=1)
 
 # Run the application
 main.mainloop()
