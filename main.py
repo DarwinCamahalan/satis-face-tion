@@ -2,6 +2,7 @@ from tkinter import *
 import json
 import datetime
 import calendar
+from PIL import Image, ImageTk
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from collections import defaultdict
@@ -22,26 +23,75 @@ main.geometry("1360x768")
 # main.eval('tk::PlaceWindow . center')
 
 # Configure main window background color
-main.configure(background="white")
+main.configure(background="white", padx=0, pady=0)
 
 content_frame = None  # Declare content_frame as a global variable
 survey_widgets = []  # List to store survey question widgets
 
 # Create a frame to hold the content
 content_frame = Frame(main, bg="white")
-content_frame.grid(row=0, column=1, padx=(50, 0), pady=(20, 0), sticky="nsew")
-
-# Create a label inside the content frame
-content_label = Label(content_frame, text="Start Page", font=font_style)
-content_label.configure(bg="white")  # Remove this line to have no background color
-content_label.pack()
-
+content_frame.grid(row=0, column=1, padx=0, pady=0, sticky="nsew")
 
 # Configure grid weights to allow expansion
 main.grid_columnconfigure(0, weight=0)
 main.grid_columnconfigure(1, weight=1)
 main.grid_rowconfigure(0, weight=1)
 
+
+def welcome_page():
+    global content_frame, survey_widgets, canvas  # Declare content_frame and survey_widgets as global variables
+    remove_survey_widgets()  # Remove any existing survey widgets
+    
+    if canvas is not None:
+        canvas.get_tk_widget().destroy()
+    
+    # Load the image
+    image = Image.open("./images/welcome_bg.png")  # Replace "path_to_your_image_file.jpg" with the actual image file path
+    
+    # Create a Label widget to display the image
+    image_label = Label(content_frame)
+    image_label.place(x=0, y=0, relwidth=1, relheight=1)  # Position the image label with absolute coordinates
+    
+    # Resize the image to fit the label
+    width = content_frame.winfo_width()
+    height = content_frame.winfo_height()
+    resized_image = image.resize((width, height), Image.LANCZOS)
+    
+    # Create a PhotoImage object from the resized image
+    photo = ImageTk.PhotoImage(resized_image)
+    
+    # Configure the image label to display the resized image
+    image_label.config(image=photo)
+    image_label.image = photo  # Store a reference to the image to prevent garbage collection
+    
+        # Create a Label widget with absolute positioning
+    # label = Label(content_frame, font=("Segoe UI Semibold", 28), bg="orange", fg="white", pady=5, padx=10, text="Good Day Customer!")
+    # label.place(x=50, y=50)  # Adjust the coordinates as needed
+    
+    #     # Create a Label widget with absolute positioning
+    # label2 = Label(content_frame, font=("Segoe UI Semibold", 14), bg="orange", fg="white", pady=5, padx=10, text="We're curious about how  you felt dining in Mukbang Ta Ja.")
+    # label2.place(x=50, y=170)  # Adjust the coordinates as needed
+    
+    #         # Create a Label widget with absolute positioning
+    # label3 = Label(content_frame, font=("Segoe UI Semibold", 14), bg="orange", fg="white", pady=5, padx=10, text="Feel Free to share your satisfaction with us so we can improve!")
+    # label3.place(x=50, y=209)  # Adjust the coordinates as needed
+    
+    # Create a Button widget with absolute positioning
+    button = Button(content_frame, command=show_feedback,text="GIVE FEEDBACK", font=("Segoe UI Semibold", 13), bg="white", fg="orange", relief="flat", borderwidth=0, padx=10, pady=5, cursor="hand2")
+    button.place(x=50, y=300)  # Adjust the coordinates as needed
+
+    survey_widgets.extend([image_label, button])  # Add the widgets to the survey_widgets list
+    
+    # Update the image label size when the content frame size changes
+    def resize_image(event):
+        width = event.width
+        height = event.height
+        resized_image = image.resize((width, height), Image.LANCZOS)
+        new_photo = ImageTk.PhotoImage(resized_image)
+        image_label.config(image=new_photo)
+        image_label.image = new_photo
+    
+    content_frame.bind("<Configure>", resize_image)
 
 # Function to get the next survey ID
 def get_next_survey_id():
@@ -65,8 +115,8 @@ def get_next_survey_id():
     # Return the next survey ID by incrementing the last survey ID
     return last_survey_id + 1
 
-
 def remove_survey_widgets():
+    feedback_btn.configure(bg="#302d2d", fg="white", highlightbackground="white", borderwidth=0, anchor="w")
     for widget in survey_widgets:
         widget.destroy()
 
@@ -75,7 +125,9 @@ def show_feedback():
     remove_survey_widgets()  # Remove any existing survey widgets
     if canvas is not None:
         canvas.get_tk_widget().destroy()
-    content_label.config(text="Survey Questions")
+        
+    feedback_btn.configure(bg="white", fg="black", highlightbackground="white", borderwidth=0, anchor="w")
+    feedback_btn.pack(padx=(25, 10), pady=20 , fill="x")
 
     # Create the survey questions and radio buttons
     question1_label = Label(content_frame, text="1. Was the service fast and friendly?", font=font_style, bg="white")
@@ -150,10 +202,14 @@ def show_feedback():
             return False
         return True
 
-    # Function to submit the survey and store the answers in a JSON file
+    # Global variable to store the reference to the PhotoImage object
+    completion_photo = None
+
     def submit_survey():
         if validate_survey():
             # Prepare the survey data
+            feedback_btn.configure(bg="#302d2d", fg="white", highlightbackground="white", borderwidth=0, anchor="w")
+            feedback_btn.pack(padx=(25, 10), pady=20, fill="x")
             survey_data = {
                 "date": str(datetime.date.today()),
                 "id": get_next_survey_id(),
@@ -180,11 +236,48 @@ def show_feedback():
             with open("survey_answer.json", "w") as file:
                 json.dump(existing_data, file, indent=4)
 
-            messagebox.showinfo("Survey Complete", "Thank you for answering the survey!")
-            feedback_btn.configure(bg="#302d2d", fg="white", highlightbackground="white", borderwidth=0, anchor="w")
-            show_start()
+            # Create a new window for displaying the completion message and image
+            complete_window = Toplevel(content_frame)
+            complete_window.title("")
+            complete_window.overrideredirect(True)  # Remove the title bar
+
+            # Load the completion image
+            completion_image = Image.open("./images/prompt_bg.png")
+            window_width = 811  # Set the desired window width
+            window_height = 458  # Set the desired window height
+            resized_image = completion_image.resize((window_width, window_height), Image.LANCZOS)
+            completion_photo = ImageTk.PhotoImage(resized_image)
+
+            # Create a Label widget to display the completion image
+            image_label = Label(complete_window, image=completion_photo)
+            image_label.pack(fill='both', expand=True)
+
+            # Store the image as an attribute of the label widget
+            image_label.image = completion_photo
+
+            # Define the close_window function
+            def close_window():
+                feedback_btn.configure(bg="#302d2d", fg="white", highlightbackground="white", borderwidth=0, anchor="w")
+                complete_window.destroy()
+                welcome_page()
+
+            # Create a Button widget for closing the window
+            close_button = Button(complete_window, text="Okay", command=close_window, font=("Segoe UI Semibold", 12),
+                                bg="white", fg="orange", relief="flat", borderwidth=0, pady=5, padx=15, cursor="hand2")
+            close_button.place(relx=0.5, rely=0.9, anchor="center")
+
+            # Center the window on the screen
+            complete_window.update_idletasks()
+            screen_width = complete_window.winfo_screenwidth()
+            screen_height = complete_window.winfo_screenheight()
+            x = (screen_width - window_width) // 2
+            y = (screen_height - window_height) // 2
+            complete_window.geometry(f"{window_width}x{window_height}+{x}+{y}")
+
         else:
             messagebox.showwarning("Incomplete Survey", "Please answer all the survey questions!")
+
+
 
 
 
@@ -198,7 +291,6 @@ def show_analytics():
     remove_survey_widgets()
     if canvas is not None:
         canvas.get_tk_widget().destroy()
-    content_label.config(text="Analytics Page")
     try:
         with open("survey_answer.json", "r") as file:
             survey_data = json.load(file)
@@ -230,12 +322,12 @@ def show_analytics():
         row_index = i // 2
         col_index = i % 2
         axes[row_index, col_index].bar(x_labels, satisfaction_counts)
-        axes[row_index, col_index].set_ylabel("Count")
+        axes[row_index, col_index].set_ylabel("Number of Person")
         if(i == 3):
             question = f"Overall Satisfaction"
         axes[row_index, col_index].set_title(question)
 
-        # Set y-axis label to total number of surveys
+        # Set y-axis label to total Number of Person
         axes[row_index, col_index].set_ylim([0, total_surveys])
         axes[row_index, col_index].set_yticks(range(0, total_surveys + 1, 1))
 
@@ -247,15 +339,11 @@ def show_analytics():
     plt.close()
     content_frame.mainloop()
 
-
-
-
 def show_data():
     global content_frame, survey_widgets, canvas, current_view  # Declare content_frame, survey_widgets, and current_view as global variables
     remove_survey_widgets()  # Remove any existing survey widgets
     if canvas is not None:
         canvas.get_tk_widget().destroy()
-    content_label.config(text="Data Page")
 
     # Load survey data from the JSON file
     try:
@@ -328,7 +416,7 @@ def show_data():
         plt.xticks(x_pos, month_names)
 
         plt.xlabel('Month')
-        plt.ylabel('Number of Surveys')
+        plt.ylabel('Number of Person')
         plt.title('Customer Satisfaction by Month')
         plt.legend()
 
@@ -359,7 +447,7 @@ def show_data():
         plt.xticks(x_pos, week_names)
 
         plt.xlabel('Week')
-        plt.ylabel('Number of Surveys')
+        plt.ylabel('Number of Person')
         plt.title('Customer Satisfaction by Week - {}'.format(calendar.month_name[month]))
         plt.legend()
 
@@ -368,40 +456,6 @@ def show_data():
         canvas.draw()
         canvas.get_tk_widget().pack(fill=BOTH, expand=True)
         plt.close()
-
-
-
-    def plot_data_by_day(month, week):
-        global canvas
-        if canvas is not None:
-            canvas.get_tk_widget().destroy()
-
-        week_data = week_counts[month][week]
-
-        # Extract days and counts for plotting
-        days = list(week_data.keys())
-        day_names = ['Day {}'.format(day) for day in days]
-        satisfied_counts = [week_data[day]['Satisfied'] for day in days]
-        unsatisfied_counts = [week_data[day]['Unsatisfied'] for day in days]
-
-        # Plot the bar graph by day
-        plt.figure(figsize=(8, 6))
-        x_pos = np.arange(len(days))
-        plt.bar(x_pos - 0.2, satisfied_counts, 0.4, label='Satisfied', color='#00b7ff')
-        plt.bar(x_pos + 0.2, unsatisfied_counts, 0.4, label='Unsatisfied', color='#ff2929')
-        plt.xticks(x_pos, day_names)
-
-        plt.xlabel('Day')
-        plt.ylabel('Number of Surveys')
-        plt.title('Customer Satisfaction by Day - Week {}'.format(week))
-        plt.legend()
-
-        # Create a Tkinter canvas to display the plot
-        canvas = FigureCanvasTkAgg(plt.gcf(), master=content_frame)
-        canvas.draw()
-        canvas.get_tk_widget().pack(fill=BOTH, expand=True)
-        plt.close()
-
 
     def on_month_click(event):
         if event.xdata is not None:
@@ -424,34 +478,24 @@ def show_data():
     elif current_view == 'week':
         canvas.mpl_connect('button_press_event', on_week_click)
 
-
 def show_start():
     global content_frame, survey_widgets, canvas  # Declare content_frame and survey_widgets as global variables
     remove_survey_widgets()  # Remove any existing survey widgets
     if canvas is not None:
         canvas.get_tk_widget().destroy()
-    content_label.config(text="Start Page")
-
-    # subprocess.Popen(["python", "cam.py"])
-    # feedback_btn.configure(bg="white", fg="black", highlightbackground="white", borderwidth=0, anchor="w")
-    # show_feedback()
     
-
 def show_satisfaction_analytics():
     global content_frame, survey_widgets, canvas  # Declare content_frame and survey_widgets as global variables
     remove_survey_widgets()  # Remove any existing survey widgets
     if canvas is not None:
         canvas.get_tk_widget().destroy()
-    content_label.config(text="Satisfaction Analytics Page")
 
 def show_satisfaction_data():
     global content_frame, survey_widgets, canvas   # Declare content_frame and survey_widgets as global variables
     remove_survey_widgets()  # Remove any existing survey widgets
     if canvas is not None:
         canvas.get_tk_widget().destroy()
-    content_label.config(text="Satisfaction Data Page")
     
-
 # Create a frame for the stacked buttons
 button_frame = Frame(main, bg="#302d2d")
 button_frame.grid(row=0, column=0, padx=0, pady=0, sticky="ns")
@@ -476,7 +520,6 @@ data_btn = Button(button_frame, text="Data", command=show_data, relief="flat", c
 data_btn.configure(bg="#302d2d", fg="white", highlightbackground="white", borderwidth=0, anchor="w")
 data_btn.pack(padx=(25, 10), pady=20, fill="x")
 
-
 satisfaction_analytics_btn = Button(button_frame, text="Satisfaction Analytics", command=show_satisfaction_analytics, relief="flat", cursor="hand2", font=font_style)
 satisfaction_analytics_btn.configure(bg="#302d2d", fg="white", highlightbackground="white", borderwidth=0, anchor="w")
 satisfaction_analytics_btn.pack(padx=(25, 25), pady=20, fill="x")
@@ -485,8 +528,8 @@ satisfaction_data_btn = Button(button_frame, text="Satisfaction Data", command=s
 satisfaction_data_btn.configure(bg="#302d2d", fg="white", highlightbackground="white", borderwidth=0, anchor="w")
 satisfaction_data_btn.pack(padx=(25, 25), pady=(20, 40), fill="x")
 
-# Show the initial content (Start Page)
-show_start()
+# Show the initial content (Welcome Page)
+welcome_page()
 
 # Run the application
 main.mainloop()
