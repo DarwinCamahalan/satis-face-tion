@@ -1,5 +1,35 @@
 from tkinter import *
+from PIL import Image, ImageTk
+import json
+import datetime
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+import subprocess
 from tkinter import messagebox
+
+canvas = None 
+# Function to get the next survey ID
+def get_next_survey_id():
+    survey_data = []
+    try:
+        with open("survey_answer.json", "r") as file:
+            survey_data = json.load(file)
+    except (FileNotFoundError, json.JSONDecodeError):
+        # Handle the case when the file is not found or contains invalid JSON data
+        # messagebox.showerror("Error", "Failed to load survey data.")
+        return 1
+
+    if not survey_data:
+        # If the survey_data list is empty, return 1 as the initial ID
+        return 1
+
+    # Find the last survey ID in the survey_data list
+    last_survey = survey_data[-1]
+    last_survey_id = last_survey.get("id", 0)
+
+    # Return the next survey ID by incrementing the last survey ID
+    return last_survey_id + 1
+
 
 # Set font for the whole application
 font_style = ("Segoe UI Semibold", 11)
@@ -10,6 +40,7 @@ main.title("satisFACEtion")
 
 # Set window size
 main.geometry("1360x768")
+# main.eval('tk::PlaceWindow . center')
 
 # Configure main window background color
 main.configure(background="white")
@@ -22,8 +53,10 @@ def remove_survey_widgets():
         widget.destroy()
 
 def show_feedback():
-    global content_frame, survey_widgets  # Declare content_frame and survey_widgets as global variables
+    global content_frame, survey_widgets, removeGraph, canvas  # Declare content_frame and survey_widgets as global variables
     remove_survey_widgets()  # Remove any existing survey widgets
+    if canvas is not None:
+        canvas.get_tk_widget().destroy()
     content_label.config(text="Survey Questions")
 
     # Create the survey questions and radio buttons
@@ -99,58 +132,135 @@ def show_feedback():
             return False
         return True
 
-    # Function to submit the survey and print the answers
+    # Function to submit the survey and store the answers in a JSON file
     def submit_survey():
         if validate_survey():
-            print("Survey Answers:")
-            print("Question 1:", "Satisfied" if satisfied1.get() == 1 else "Unsatisfied")
-            print("Question 2:", "Satisfied" if satisfied2.get() == 1 else "Unsatisfied")
-            print("Question 3:", "Satisfied" if satisfied3.get() == 1 else "Unsatisfied")
-            print("Question 4:", "Satisfied" if satisfied4.get() == 1 else "Unsatisfied")
-            
-            messagebox.showinfo("Survey Complete", "Thank you for Answering the Survey!")
+            # Prepare the survey data
+            survey_data = {
+                "timestamp": str(datetime.datetime.now()),
+                "id": get_next_survey_id(),
+                "answers": {
+                    "Question 1": "Satisfied" if satisfied1.get() == 1 else "Unsatisfied",
+                    "Question 2": "Satisfied" if satisfied2.get() == 1 else "Unsatisfied",
+                    "Question 3": "Satisfied" if satisfied3.get() == 1 else "Unsatisfied",
+                    "Question 4": "Satisfied" if satisfied4.get() == 1 else "Unsatisfied"
+                }
+            }
+
+            # Load existing survey data from the JSON file
+            existing_data = []
+            try:
+                with open("survey_answer.json", "r") as file:
+                    existing_data = json.load(file)
+            except FileNotFoundError:
+                pass
+
+            # Append the new survey data to the existing data
+            existing_data.append(survey_data)
+
+            # Save the updated survey data to the JSON file
+            with open("survey_answer.json", "w") as file:
+                json.dump(existing_data, file, indent=4)
+
+            messagebox.showinfo("Survey Complete", "Thank you for answering the survey!")
             feedback_btn.configure(bg="#302d2d", fg="white", highlightbackground="white", borderwidth=0, anchor="w")
-            welcome_page()
+            show_start()
         else:
             messagebox.showwarning("Incomplete Survey", "Please answer all the survey questions!")
 
+
+
     # Create a button to submit the survey
-    submit_button = Button(content_frame, text="Submit", command=submit_survey, font=font_style)
+    submit_button = Button(content_frame, text="Submit", command=submit_survey, relief="flat", cursor="hand2", bg="green", fg="white", borderwidth=0, padx=20, pady=5, font=font_style)
     submit_button.pack(pady=(20, 0))
     survey_widgets.append(submit_button)
 
 def show_analytics():
-    global content_frame, survey_widgets  # Declare content_frame and survey_widgets as global variables
-    remove_survey_widgets()  # Remove any existing survey widgets
+    global content_frame, survey_widgets, canvas
+    remove_survey_widgets()
     content_label.config(text="Analytics Page")
+    try:
+        with open("survey_answer.json", "r") as file:
+            survey_data = json.load(file)
+    except (FileNotFoundError, json.JSONDecodeError):
+        messagebox.showerror("Error", "Failed to load survey data.")
+        return
+
+    if not survey_data:
+        messagebox.showinfo("No Data", "No survey data available.")
+        return
+
+    total_surveys = len(survey_data)
+
+    fig, axes = plt.subplots(nrows=2, ncols=2, figsize=(12, 8))
+    plt.subplots_adjust(wspace=0.4, hspace=0.4)
+
+    for i in range(4):
+        question = f"Question {i+1}"            
+        x_labels = ["Satisfied", "Unsatisfied"]
+        satisfaction_counts = [0, 0]  # Initialize counts for both labels
+
+        for entry in survey_data:
+            answer = entry["answers"].get(question)
+            if answer == "Satisfied":
+                satisfaction_counts[0] += 1  # Increment count for Satisfied
+            elif answer == "Unsatisfied":
+                satisfaction_counts[1] += 1  # Increment count for Unsatisfied
+
+        row_index = i // 2
+        col_index = i % 2
+        axes[row_index, col_index].bar(x_labels, satisfaction_counts)
+        axes[row_index, col_index].set_ylabel("Count")
+        if(i == 3):
+            question = f"Overall Satisfaction"
+        axes[row_index, col_index].set_title(question)
+
+        # Set y-axis label to total number of surveys
+        axes[row_index, col_index].set_ylim([0, total_surveys])
+        axes[row_index, col_index].set_yticks(range(0, total_surveys + 1, 1))
+
+    fig.tight_layout(pad=2.0)
+
+    canvas = FigureCanvasTkAgg(fig, master=content_frame)
+    canvas.draw()
+    canvas.get_tk_widget().pack(fill=BOTH, expand=True)
+
+    content_frame.mainloop()
 
 def show_data():
-    global content_frame, survey_widgets  # Declare content_frame and survey_widgets as global variables
+    global content_frame, survey_widgets, canvas   # Declare content_frame and survey_widgets as global variables
     remove_survey_widgets()  # Remove any existing survey widgets
+    if canvas is not None:
+        canvas.get_tk_widget().destroy()
     content_label.config(text="Data Page")
 
 def show_start():
-    global content_frame, survey_widgets  # Declare content_frame and survey_widgets as global variables
+    global content_frame, survey_widgets, canvas  # Declare content_frame and survey_widgets as global variables
     remove_survey_widgets()  # Remove any existing survey widgets
-    feedback_btn.configure(bg="white", fg="black", highlightbackground="white", borderwidth=0, anchor="w")
-    show_feedback()
-    # content_label.config(text="Start Page")
+    if canvas is not None:
+        canvas.get_tk_widget().destroy()
+    content_label.config(text="Start Page")
+
+    # subprocess.Popen(["python", "cam.py"])
+    # feedback_btn.configure(bg="white", fg="black", highlightbackground="white", borderwidth=0, anchor="w")
+    # show_feedback()
+    
 
 def show_satisfaction_analytics():
-    global content_frame, survey_widgets  # Declare content_frame and survey_widgets as global variables
+    global content_frame, survey_widgets, canvas  # Declare content_frame and survey_widgets as global variables
     remove_survey_widgets()  # Remove any existing survey widgets
+    if canvas is not None:
+        canvas.get_tk_widget().destroy()
     content_label.config(text="Satisfaction Analytics Page")
 
 def show_satisfaction_data():
-    global content_frame, survey_widgets  # Declare content_frame and survey_widgets as global variables
+    global content_frame, survey_widgets, canvas   # Declare content_frame and survey_widgets as global variables
     remove_survey_widgets()  # Remove any existing survey widgets
+    if canvas is not None:
+        canvas.get_tk_widget().destroy()
     content_label.config(text="Satisfaction Data Page")
     
-def welcome_page():
-    global content_frame, survey_widgets  # Declare content_frame and survey_widgets as global variables
-    remove_survey_widgets()  # Remove any existing survey widgets
-    content_label.config(text="Welcome!")
-    
+
 # Create a frame for the stacked buttons
 button_frame = Frame(main, bg="#302d2d")
 button_frame.grid(row=0, column=0, padx=0, pady=0, sticky="ns")
@@ -167,21 +277,24 @@ feedback_btn = Button(button_frame, text="Feedback", command=show_feedback, reli
 feedback_btn.configure(bg="#302d2d", fg="white", highlightbackground="white", borderwidth=0, anchor="w")
 feedback_btn.pack(padx=(25, 10), pady=20 , fill="x")
 
+analytics_btn = Button(button_frame, text="Analytics", command=show_analytics, relief="flat", cursor="hand2", font=font_style)
+analytics_btn.configure(bg="#302d2d", fg="white", highlightbackground="white", borderwidth=0, anchor="w")
+analytics_btn.pack(padx=(25, 10), pady=20, fill="x")
+
 data_btn = Button(button_frame, text="Data", command=show_data, relief="flat", cursor="hand2", font=font_style)
 data_btn.configure(bg="#302d2d", fg="white", highlightbackground="white", borderwidth=0, anchor="w")
 data_btn.pack(padx=(25, 10), pady=20, fill="x")
 
-analytics_btn = Button(button_frame, text="Analytics", command=show_analytics, relief="flat", cursor="hand2", font=font_style)
-analytics_btn.configure(bg="#302d2d", fg="white", highlightbackground="white", borderwidth=0, anchor="w")
-analytics_btn.pack(padx=(25, 10), pady=20, fill="x")
+
+satisfaction_analytics_btn = Button(button_frame, text="Satisfaction Analytics", command=show_satisfaction_analytics, relief="flat", cursor="hand2", font=font_style)
+satisfaction_analytics_btn.configure(bg="#302d2d", fg="white", highlightbackground="white", borderwidth=0, anchor="w")
+satisfaction_analytics_btn.pack(padx=(25, 25), pady=20, fill="x")
 
 satisfaction_data_btn = Button(button_frame, text="Satisfaction Data", command=show_satisfaction_data, relief="flat", cursor="hand2", font=font_style)
 satisfaction_data_btn.configure(bg="#302d2d", fg="white", highlightbackground="white", borderwidth=0, anchor="w")
 satisfaction_data_btn.pack(padx=(25, 25), pady=(20, 40), fill="x")
 
-satisfaction_analytics_btn = Button(button_frame, text="Satisfaction Analytics", command=show_satisfaction_analytics, relief="flat", cursor="hand2", font=font_style)
-satisfaction_analytics_btn.configure(bg="#302d2d", fg="white", highlightbackground="white", borderwidth=0, anchor="w")
-satisfaction_analytics_btn.pack(padx=(25, 25), pady=20, fill="x")
+
 
 # Create a frame to hold the content
 content_frame = Frame(main, bg="white")
@@ -193,7 +306,7 @@ content_label.configure(bg="white")  # Remove this line to have no background co
 content_label.pack()
 
 # Show the initial content (Start Page)
-welcome_page()
+show_start()
 
 # Configure grid weights to allow expansion
 main.grid_columnconfigure(0, weight=0)
