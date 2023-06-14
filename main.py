@@ -117,6 +117,7 @@ def get_next_survey_id():
 
 def remove_survey_widgets():
     feedback_btn.configure(bg="#302d2d", fg="white", highlightbackground="white", borderwidth=0, anchor="w")
+    feedback_btn.pack(padx=(17, 10), pady=20, fill="x")
     for widget in survey_widgets:
         widget.destroy()
 
@@ -209,7 +210,7 @@ def show_feedback():
         if validate_survey():
             # Prepare the survey data
             feedback_btn.configure(bg="#302d2d", fg="white", highlightbackground="white", borderwidth=0, anchor="w")
-            feedback_btn.pack(padx=(25, 10), pady=20, fill="x")
+            feedback_btn.pack(padx=(17, 10), pady=20, fill="x")
             survey_data = {
                 "date": str(datetime.date.today()),
                 "id": get_next_survey_id(),
@@ -258,6 +259,7 @@ def show_feedback():
             # Define the close_window function
             def close_window():
                 feedback_btn.configure(bg="#302d2d", fg="white", highlightbackground="white", borderwidth=0, anchor="w")
+                feedback_btn.pack(padx=(17, 10), pady=20, fill="x")
                 complete_window.destroy()
                 welcome_page()
 
@@ -276,11 +278,7 @@ def show_feedback():
 
         else:
             messagebox.showwarning("Incomplete Survey", "Please answer all the survey questions!")
-
-
-
-
-
+            
     # Create a button to submit the survey
     submit_button = Button(content_frame, text="Submit", command=submit_survey, relief="flat", cursor="hand2", bg="green", fg="white", borderwidth=0, padx=20, pady=5, font=font_style)
     submit_button.pack(pady=(20, 0))
@@ -506,27 +504,27 @@ button_frame.grid_rowconfigure(0, weight=1)
 # Create left-side navigation buttons
 start_btn = Button(button_frame, text="Start", command=show_start, relief="flat", cursor="hand2", font=font_style)
 start_btn.configure(bg="#302d2d", fg="white", highlightbackground="white", borderwidth=0, anchor="w")
-start_btn.pack(padx=(25, 10),pady=(40, 20), fill="x")
+start_btn.pack(padx=(17, 10),pady=(60, 20), fill="x")
 
 feedback_btn = Button(button_frame, text="Feedback", command=show_feedback, relief="flat", cursor="hand2", font=font_style)
 feedback_btn.configure(bg="#302d2d", fg="white", highlightbackground="white", borderwidth=0, anchor="w")
-feedback_btn.pack(padx=(25, 10), pady=20 , fill="x")
+feedback_btn.pack(padx=(17, 10), pady=20 , fill="x")
 
 analytics_btn = Button(button_frame, text="Analytics", command=show_analytics, relief="flat", cursor="hand2", font=font_style)
 analytics_btn.configure(bg="#302d2d", fg="white", highlightbackground="white", borderwidth=0, anchor="w")
-analytics_btn.pack(padx=(25, 10), pady=20, fill="x")
+analytics_btn.pack(padx=(17, 10), pady=20, fill="x")
 
 data_btn = Button(button_frame, text="Data", command=show_data, relief="flat", cursor="hand2", font=font_style)
 data_btn.configure(bg="#302d2d", fg="white", highlightbackground="white", borderwidth=0, anchor="w")
-data_btn.pack(padx=(25, 10), pady=20, fill="x")
+data_btn.pack(padx=(17, 10), pady=20, fill="x")
 
 satisfaction_analytics_btn = Button(button_frame, text="Satisfaction Analytics", command=show_satisfaction_analytics, relief="flat", cursor="hand2", font=font_style)
 satisfaction_analytics_btn.configure(bg="#302d2d", fg="white", highlightbackground="white", borderwidth=0, anchor="w")
-satisfaction_analytics_btn.pack(padx=(25, 25), pady=20, fill="x")
+satisfaction_analytics_btn.pack(padx=(17, 25), pady=20, fill="x")
 
 satisfaction_data_btn = Button(button_frame, text="Satisfaction Data", command=show_satisfaction_data, relief="flat", cursor="hand2", font=font_style)
 satisfaction_data_btn.configure(bg="#302d2d", fg="white", highlightbackground="white", borderwidth=0, anchor="w")
-satisfaction_data_btn.pack(padx=(25, 25), pady=(20, 40), fill="x")
+satisfaction_data_btn.pack(padx=(17, 25), pady=(20, 40), fill="x")
 
 # Show the initial content (Welcome Page)
 welcome_page()
