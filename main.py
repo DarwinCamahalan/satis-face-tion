@@ -1,4 +1,5 @@
 from tkinter import *
+from tkinter import messagebox
 
 # Set font for the whole application
 font_style = ("Segoe UI Semibold", 11)
@@ -86,13 +87,31 @@ def show_feedback():
     unsatisfied4_radiobutton.pack(anchor="w", pady=(0, 20))
     survey_widgets.append(unsatisfied4_radiobutton)
 
+    # Function to validate the survey choices
+    def validate_survey():
+        if satisfied1.get() == 0 and unsatisfied1.get() == 0:
+            return False
+        if satisfied2.get() == 0 and unsatisfied2.get() == 0:
+            return False
+        if satisfied3.get() == 0 and unsatisfied3.get() == 0:
+            return False
+        if satisfied4.get() == 0 and unsatisfied4.get() == 0:
+            return False
+        return True
+
     # Function to submit the survey and print the answers
     def submit_survey():
-        print("Survey Answers:")
-        print("Question 1:", "Satisfied" if satisfied1.get() == 1 else "Unsatisfied")
-        print("Question 2:", "Satisfied" if satisfied2.get() == 1 else "Unsatisfied")
-        print("Question 3:", "Satisfied" if satisfied3.get() == 1 else "Unsatisfied")
-        print("Question 4:", "Satisfied" if satisfied4.get() == 1 else "Unsatisfied")
+        if validate_survey():
+            print("Survey Answers:")
+            print("Question 1:", "Satisfied" if satisfied1.get() == 1 else "Unsatisfied")
+            print("Question 2:", "Satisfied" if satisfied2.get() == 1 else "Unsatisfied")
+            print("Question 3:", "Satisfied" if satisfied3.get() == 1 else "Unsatisfied")
+            print("Question 4:", "Satisfied" if satisfied4.get() == 1 else "Unsatisfied")
+            
+            messagebox.showinfo("Survey Complete", "Thank you for Answering the Survey!")
+            show_start()
+        else:
+            messagebox.showwarning("Incomplete Survey", "Please answer all the survey questions!")
 
     # Create a button to submit the survey
     submit_button = Button(content_frame, text="Submit", command=submit_survey, font=font_style)
@@ -150,11 +169,11 @@ start_btn.pack(padx=(25, 10), pady=20, fill="x")
 
 satisfaction_analytics_btn = Button(button_frame, text="Satisfaction Analytics", command=show_satisfaction_analytics, relief="flat", cursor="hand2", font=font_style)
 satisfaction_analytics_btn.configure(bg="#302d2d", fg="white", highlightbackground="white", borderwidth=0, anchor="w")
-satisfaction_analytics_btn.pack(padx=(25, 20), pady=20, fill="x")
+satisfaction_analytics_btn.pack(padx=(25, 25), pady=20, fill="x")
 
 satisfaction_data_btn = Button(button_frame, text="Satisfaction Data", command=show_satisfaction_data, relief="flat", cursor="hand2", font=font_style)
 satisfaction_data_btn.configure(bg="#302d2d", fg="white", highlightbackground="white", borderwidth=0, anchor="w")
-satisfaction_data_btn.pack(padx=(25, 20), pady=(20, 40), fill="x")
+satisfaction_data_btn.pack(padx=(25, 25), pady=(20, 40), fill="x")
 
 # Create a frame to hold the content
 content_frame = Frame(main, bg="white")
