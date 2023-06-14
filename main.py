@@ -109,7 +109,8 @@ def show_feedback():
             print("Question 4:", "Satisfied" if satisfied4.get() == 1 else "Unsatisfied")
             
             messagebox.showinfo("Survey Complete", "Thank you for Answering the Survey!")
-            show_start()
+            feedback_btn.configure(bg="#302d2d", fg="white", highlightbackground="white", borderwidth=0, anchor="w")
+            welcome_page()
         else:
             messagebox.showwarning("Incomplete Survey", "Please answer all the survey questions!")
 
@@ -131,7 +132,9 @@ def show_data():
 def show_start():
     global content_frame, survey_widgets  # Declare content_frame and survey_widgets as global variables
     remove_survey_widgets()  # Remove any existing survey widgets
-    content_label.config(text="Start Page")
+    feedback_btn.configure(bg="white", fg="black", highlightbackground="white", borderwidth=0, anchor="w")
+    show_feedback()
+    # content_label.config(text="Start Page")
 
 def show_satisfaction_analytics():
     global content_frame, survey_widgets  # Declare content_frame and survey_widgets as global variables
@@ -142,7 +145,12 @@ def show_satisfaction_data():
     global content_frame, survey_widgets  # Declare content_frame and survey_widgets as global variables
     remove_survey_widgets()  # Remove any existing survey widgets
     content_label.config(text="Satisfaction Data Page")
-
+    
+def welcome_page():
+    global content_frame, survey_widgets  # Declare content_frame and survey_widgets as global variables
+    remove_survey_widgets()  # Remove any existing survey widgets
+    content_label.config(text="Welcome!")
+    
 # Create a frame for the stacked buttons
 button_frame = Frame(main, bg="#302d2d")
 button_frame.grid(row=0, column=0, padx=0, pady=0, sticky="ns")
@@ -151,29 +159,29 @@ button_frame.grid(row=0, column=0, padx=0, pady=0, sticky="ns")
 button_frame.grid_rowconfigure(0, weight=1)
 
 # Create left-side navigation buttons
+start_btn = Button(button_frame, text="Start", command=show_start, relief="flat", cursor="hand2", font=font_style)
+start_btn.configure(bg="#302d2d", fg="white", highlightbackground="white", borderwidth=0, anchor="w")
+start_btn.pack(padx=(25, 10),pady=(40, 20), fill="x")
+
 feedback_btn = Button(button_frame, text="Feedback", command=show_feedback, relief="flat", cursor="hand2", font=font_style)
 feedback_btn.configure(bg="#302d2d", fg="white", highlightbackground="white", borderwidth=0, anchor="w")
-feedback_btn.pack(padx=(25, 10), pady=(40, 20), fill="x")
-
-analytics_btn = Button(button_frame, text="Analytics", command=show_analytics, relief="flat", cursor="hand2", font=font_style)
-analytics_btn.configure(bg="#302d2d", fg="white", highlightbackground="white", borderwidth=0, anchor="w")
-analytics_btn.pack(padx=(25, 10), pady=20, fill="x")
+feedback_btn.pack(padx=(25, 10), pady=20 , fill="x")
 
 data_btn = Button(button_frame, text="Data", command=show_data, relief="flat", cursor="hand2", font=font_style)
 data_btn.configure(bg="#302d2d", fg="white", highlightbackground="white", borderwidth=0, anchor="w")
 data_btn.pack(padx=(25, 10), pady=20, fill="x")
 
-start_btn = Button(button_frame, text="Start", command=show_start, relief="flat", cursor="hand2", font=font_style)
-start_btn.configure(bg="#302d2d", fg="white", highlightbackground="white", borderwidth=0, anchor="w")
-start_btn.pack(padx=(25, 10), pady=20, fill="x")
-
-satisfaction_analytics_btn = Button(button_frame, text="Satisfaction Analytics", command=show_satisfaction_analytics, relief="flat", cursor="hand2", font=font_style)
-satisfaction_analytics_btn.configure(bg="#302d2d", fg="white", highlightbackground="white", borderwidth=0, anchor="w")
-satisfaction_analytics_btn.pack(padx=(25, 25), pady=20, fill="x")
+analytics_btn = Button(button_frame, text="Analytics", command=show_analytics, relief="flat", cursor="hand2", font=font_style)
+analytics_btn.configure(bg="#302d2d", fg="white", highlightbackground="white", borderwidth=0, anchor="w")
+analytics_btn.pack(padx=(25, 10), pady=20, fill="x")
 
 satisfaction_data_btn = Button(button_frame, text="Satisfaction Data", command=show_satisfaction_data, relief="flat", cursor="hand2", font=font_style)
 satisfaction_data_btn.configure(bg="#302d2d", fg="white", highlightbackground="white", borderwidth=0, anchor="w")
 satisfaction_data_btn.pack(padx=(25, 25), pady=(20, 40), fill="x")
+
+satisfaction_analytics_btn = Button(button_frame, text="Satisfaction Analytics", command=show_satisfaction_analytics, relief="flat", cursor="hand2", font=font_style)
+satisfaction_analytics_btn.configure(bg="#302d2d", fg="white", highlightbackground="white", borderwidth=0, anchor="w")
+satisfaction_analytics_btn.pack(padx=(25, 25), pady=20, fill="x")
 
 # Create a frame to hold the content
 content_frame = Frame(main, bg="white")
@@ -185,7 +193,7 @@ content_label.configure(bg="white")  # Remove this line to have no background co
 content_label.pack()
 
 # Show the initial content (Start Page)
-show_start()
+welcome_page()
 
 # Configure grid weights to allow expansion
 main.grid_columnconfigure(0, weight=0)
