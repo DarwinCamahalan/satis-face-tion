@@ -32,12 +32,12 @@ def show_feedback():
     survey_widgets.append(question1_label)
     
     satisfied1 = IntVar()
-    satisfied1_radiobutton = Radiobutton(content_frame, text="Satisfied", variable=satisfied1, value=1, font=font_style, command=lambda: unsatisfied1.set(0))
+    satisfied1_radiobutton = Radiobutton(content_frame, text="Satisfied", bg="white", variable=satisfied1, value=1, font=font_style, command=lambda: unsatisfied1.set(0))
     satisfied1_radiobutton.pack(anchor="w")
     survey_widgets.append(satisfied1_radiobutton)
 
     unsatisfied1 = IntVar()
-    unsatisfied1_radiobutton = Radiobutton(content_frame, text="Unsatisfied", variable=unsatisfied1, value=1, font=font_style, command=lambda: satisfied1.set(0))
+    unsatisfied1_radiobutton = Radiobutton(content_frame, text="Unsatisfied", bg="white", variable=unsatisfied1, value=1, font=font_style, command=lambda: satisfied1.set(0))
     unsatisfied1_radiobutton.pack(anchor="w", pady=(0, 20))
     survey_widgets.append(unsatisfied1_radiobutton)
 
@@ -47,12 +47,12 @@ def show_feedback():
     survey_widgets.append(question2_label)
     
     satisfied2 = IntVar()
-    satisfied2_radiobutton = Radiobutton(content_frame, text="Satisfied", variable=satisfied2, value=1, font=font_style, command=lambda: unsatisfied2.set(0))
+    satisfied2_radiobutton = Radiobutton(content_frame, text="Satisfied", bg="white", variable=satisfied2, value=1, font=font_style, command=lambda: unsatisfied2.set(0))
     satisfied2_radiobutton.pack(anchor="w")
     survey_widgets.append(satisfied2_radiobutton)
 
     unsatisfied2 = IntVar()
-    unsatisfied2_radiobutton = Radiobutton(content_frame, text="Unsatisfied", variable=unsatisfied2, value=1, font=font_style, command=lambda: satisfied2.set(0))
+    unsatisfied2_radiobutton = Radiobutton(content_frame, text="Unsatisfied", bg="white", variable=unsatisfied2, value=1, font=font_style, command=lambda: satisfied2.set(0))
     unsatisfied2_radiobutton.pack(anchor="w", pady=(0, 20))
     survey_widgets.append(unsatisfied2_radiobutton)
 
@@ -62,12 +62,12 @@ def show_feedback():
     survey_widgets.append(question3_label)
 
     satisfied3 = IntVar()
-    satisfied3_radiobutton = Radiobutton(content_frame, text="Satisfied", variable=satisfied3, value=1, font=font_style, command=lambda: unsatisfied3.set(0))
+    satisfied3_radiobutton = Radiobutton(content_frame, text="Satisfied", bg="white", variable=satisfied3, value=1, font=font_style, command=lambda: unsatisfied3.set(0))
     satisfied3_radiobutton.pack(anchor="w")
     survey_widgets.append(satisfied3_radiobutton)
 
     unsatisfied3 = IntVar()
-    unsatisfied3_radiobutton = Radiobutton(content_frame, text="Unsatisfied", variable=unsatisfied3, value=1, font=font_style, command=lambda: satisfied3.set(0))
+    unsatisfied3_radiobutton = Radiobutton(content_frame, text="Unsatisfied", bg="white", variable=unsatisfied3, value=1, font=font_style, command=lambda: satisfied3.set(0))
     unsatisfied3_radiobutton.pack(anchor="w", pady=(0, 20))
     survey_widgets.append(unsatisfied3_radiobutton)
 
@@ -77,12 +77,12 @@ def show_feedback():
     survey_widgets.append(question4_label)
 
     satisfied4 = IntVar()
-    satisfied4_radiobutton = Radiobutton(content_frame, text="Satisfied", variable=satisfied4, value=1, font=font_style, command=lambda: unsatisfied4.set(0))
+    satisfied4_radiobutton = Radiobutton(content_frame, text="Satisfied", bg="white", variable=satisfied4, value=1, font=font_style, command=lambda: unsatisfied4.set(0))
     satisfied4_radiobutton.pack(anchor="w")
     survey_widgets.append(satisfied4_radiobutton)
 
     unsatisfied4 = IntVar()
-    unsatisfied4_radiobutton = Radiobutton(content_frame, text="Unsatisfied", variable=unsatisfied4, value=1, font=font_style, command=lambda: satisfied4.set(0))
+    unsatisfied4_radiobutton = Radiobutton(content_frame, text="Unsatisfied", bg="white", variable=unsatisfied4, value=1, font=font_style, command=lambda: satisfied4.set(0))
     unsatisfied4_radiobutton.pack(anchor="w", pady=(0, 20))
     survey_widgets.append(unsatisfied4_radiobutton)
 
@@ -133,28 +133,28 @@ button_frame.grid_rowconfigure(0, weight=1)
 
 # Create left-side navigation buttons
 feedback_btn = Button(button_frame, text="Feedback", command=show_feedback, relief="flat", cursor="hand2", font=font_style)
-feedback_btn.configure(bg="#302d2d", fg="white", highlightbackground="white", borderwidth=0)
-feedback_btn.pack(padx=10, pady=(40, 20), fill="x")
+feedback_btn.configure(bg="#302d2d", fg="white", highlightbackground="white", borderwidth=0, anchor="w")
+feedback_btn.pack(padx=(25, 10), pady=(40, 20), fill="x")
 
 analytics_btn = Button(button_frame, text="Analytics", command=show_analytics, relief="flat", cursor="hand2", font=font_style)
-analytics_btn.configure(bg="#302d2d", fg="white", highlightbackground="white", borderwidth=0)
-analytics_btn.pack(padx=10, pady=20, fill="x")
+analytics_btn.configure(bg="#302d2d", fg="white", highlightbackground="white", borderwidth=0, anchor="w")
+analytics_btn.pack(padx=(25, 10), pady=20, fill="x")
 
 data_btn = Button(button_frame, text="Data", command=show_data, relief="flat", cursor="hand2", font=font_style)
-data_btn.configure(bg="#302d2d", fg="white", highlightbackground="white", borderwidth=0)
-data_btn.pack(padx=10, pady=20, fill="x")
+data_btn.configure(bg="#302d2d", fg="white", highlightbackground="white", borderwidth=0, anchor="w")
+data_btn.pack(padx=(25, 10), pady=20, fill="x")
 
 start_btn = Button(button_frame, text="Start", command=show_start, relief="flat", cursor="hand2", font=font_style)
-start_btn.configure(bg="#302d2d", fg="white", highlightbackground="white", borderwidth=0)
-start_btn.pack(padx=10, pady=20, fill="x")
+start_btn.configure(bg="#302d2d", fg="white", highlightbackground="white", borderwidth=0, anchor="w")
+start_btn.pack(padx=(25, 10), pady=20, fill="x")
 
 satisfaction_analytics_btn = Button(button_frame, text="Satisfaction Analytics", command=show_satisfaction_analytics, relief="flat", cursor="hand2", font=font_style)
-satisfaction_analytics_btn.configure(bg="#302d2d", fg="white", highlightbackground="white", borderwidth=0)
-satisfaction_analytics_btn.pack(padx=10, pady=20, fill="x")
+satisfaction_analytics_btn.configure(bg="#302d2d", fg="white", highlightbackground="white", borderwidth=0, anchor="w")
+satisfaction_analytics_btn.pack(padx=(25, 20), pady=20, fill="x")
 
 satisfaction_data_btn = Button(button_frame, text="Satisfaction Data", command=show_satisfaction_data, relief="flat", cursor="hand2", font=font_style)
-satisfaction_data_btn.configure(bg="#302d2d", fg="white", highlightbackground="white", borderwidth=0)
-satisfaction_data_btn.pack(padx=10, pady=(20, 40), fill="x")
+satisfaction_data_btn.configure(bg="#302d2d", fg="white", highlightbackground="white", borderwidth=0, anchor="w")
+satisfaction_data_btn.pack(padx=(25, 20), pady=(20, 40), fill="x")
 
 # Create a frame to hold the content
 content_frame = Frame(main, bg="white")
