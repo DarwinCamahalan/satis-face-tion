@@ -26,6 +26,12 @@ font_style = ("Segoe UI Semibold", 11)
 main = Tk()
 main.title("satisFACEtion")
 
+# Set the path to your icon file (should be a .ico file on Windows)
+icon_path = "./images/favicon.ico"
+
+# Set the window icon
+main.iconbitmap(icon_path)
+
 # Set window size
 main.geometry("1360x768")
 
@@ -126,66 +132,72 @@ def show_feedback():
 
         feedback_btn.configure(bg="white", fg="black", highlightbackground="white", borderwidth=0, anchor="w")
         feedback_btn.pack(padx=(25, 10), pady=20, fill="x")
+        
+        # Create the survey questions and radio buttons
+        survey_question1_label = Label(content_frame, text="Survey Questions", font=("Segoe UI Bold", 15), bg="white")
+        survey_question1_label.pack(anchor="w", pady=(20, 10), padx=(70, 0))
+        survey_question1_label.configure(pady=5)  # Add letter spacing of 2 pixels
+        survey_widgets.append(survey_question1_label)
 
         # Create the survey questions and radio buttons
         question1_label = Label(content_frame, text="1. Was the service fast and friendly?", font=font_style, bg="white")
-        question1_label.pack(anchor="w", pady=(20, 10), padx=20)
+        question1_label.pack(anchor="w", pady=(20, 10), padx=(70, 0))
         question1_label.configure(pady=5)  # Add letter spacing of 2 pixels
         survey_widgets.append(question1_label)
 
         satisfied1 = IntVar()
         satisfied1_radiobutton = Radiobutton(content_frame, text="Satisfied", bg="white", variable=satisfied1, value=1, font=font_style, command=lambda: unsatisfied1.set(0))
-        satisfied1_radiobutton.pack(anchor="w", padx=20)
+        satisfied1_radiobutton.pack(anchor="w", padx=(70, 0))
         survey_widgets.append(satisfied1_radiobutton)
 
         unsatisfied1 = IntVar()
         unsatisfied1_radiobutton = Radiobutton(content_frame, text="Unsatisfied", bg="white", variable=unsatisfied1, value=1, font=font_style, command=lambda: satisfied1.set(0))
-        unsatisfied1_radiobutton.pack(anchor="w", pady=(0, 20), padx=20)
+        unsatisfied1_radiobutton.pack(anchor="w", pady=(0, 20), padx=(70, 0))
         survey_widgets.append(unsatisfied1_radiobutton)
 
         question2_label = Label(content_frame, text="2. Was your food fresh and tasty?", font=font_style, bg="white")
-        question2_label.pack(anchor="w", pady=(20, 10), padx=20)
+        question2_label.pack(anchor="w", pady=(20, 10), padx=(70, 0))
         question2_label.configure(pady=5)  # Add letter spacing of 2 pixels
         survey_widgets.append(question2_label)
 
         satisfied2 = IntVar()
         satisfied2_radiobutton = Radiobutton(content_frame, text="Satisfied", bg="white", variable=satisfied2, value=1, font=font_style, command=lambda: unsatisfied2.set(0))
-        satisfied2_radiobutton.pack(anchor="w", padx=20)
+        satisfied2_radiobutton.pack(anchor="w", padx=(70, 0))
         survey_widgets.append(satisfied2_radiobutton)
 
         unsatisfied2 = IntVar()
         unsatisfied2_radiobutton = Radiobutton(content_frame, text="Unsatisfied", bg="white", variable=unsatisfied2, value=1, font=font_style, command=lambda: satisfied2.set(0))
-        unsatisfied2_radiobutton.pack(anchor="w", pady=(0, 20), padx=20)
+        unsatisfied2_radiobutton.pack(anchor="w", pady=(0, 20), padx=(70, 0))
         survey_widgets.append(unsatisfied2_radiobutton)
 
         question3_label = Label(content_frame, text="3. Are you pleased with the quality of the meal?", font=font_style, bg="white")
-        question3_label.pack(anchor="w", pady=(20, 10), padx=20)
+        question3_label.pack(anchor="w", pady=(20, 10), padx=(70, 0))
         question3_label.configure(pady=5)  # Add letter spacing of 2 pixels
         survey_widgets.append(question3_label)
 
         satisfied3 = IntVar()
         satisfied3_radiobutton = Radiobutton(content_frame, text="Satisfied", bg="white", variable=satisfied3, value=1, font=font_style, command=lambda: unsatisfied3.set(0))
-        satisfied3_radiobutton.pack(anchor="w", padx=20)
+        satisfied3_radiobutton.pack(anchor="w", padx=(70, 0))
         survey_widgets.append(satisfied3_radiobutton)
 
         unsatisfied3 = IntVar()
         unsatisfied3_radiobutton = Radiobutton(content_frame, text="Unsatisfied", bg="white", variable=unsatisfied3, value=1, font=font_style, command=lambda: satisfied3.set(0))
-        unsatisfied3_radiobutton.pack(anchor="w", pady=(0, 20), padx=20)
+        unsatisfied3_radiobutton.pack(anchor="w", pady=(0, 20), padx=(70, 0))
         survey_widgets.append(unsatisfied3_radiobutton)
 
         question4_label = Label(content_frame, text="4. Rate your overall satisfaction?", font=font_style, bg="white")
-        question4_label.pack(anchor="w", pady=(20, 10), padx=20)
+        question4_label.pack(anchor="w", pady=(20, 10), padx=(70, 0))
         question4_label.configure(pady=5)  # Add letter spacing of 2 pixels
         survey_widgets.append(question4_label)
 
         satisfied4 = IntVar()
         satisfied4_radiobutton = Radiobutton(content_frame, text="Satisfied", bg="white", variable=satisfied4, value=1, font=font_style, command=lambda: unsatisfied4.set(0))
-        satisfied4_radiobutton.pack(anchor="w", padx=20)
+        satisfied4_radiobutton.pack(anchor="w", padx=(70, 0))
         survey_widgets.append(satisfied4_radiobutton)
 
         unsatisfied4 = IntVar()
         unsatisfied4_radiobutton = Radiobutton(content_frame, text="Unsatisfied", bg="white", variable=unsatisfied4, value=1, font=font_style, command=lambda: satisfied4.set(0))
-        unsatisfied4_radiobutton.pack(anchor="w", pady=(0, 20), padx=20)
+        unsatisfied4_radiobutton.pack(anchor="w", pady=(0, 20), padx=(70, 0))
         survey_widgets.append(unsatisfied4_radiobutton)
 
         # Function to validate the survey choices
@@ -609,7 +621,6 @@ def camera_loop():
 def show_start():
     global start_btn
     threading.Thread(target=camera_loop).start()
-    messagebox.showinfo("Starting Camera", "Camera Starting, Please Wait.")
     # Disable the start button
     start_btn.config(state=DISABLED, text="Please Wait...",)
     
