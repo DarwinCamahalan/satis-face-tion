@@ -332,7 +332,7 @@ def show_data():
     global content_frame, survey_widgets, canvas, current_view  # Declare content_frame, survey_widgets, and current_view as global variables
     remove_survey_widgets()  # Remove any existing survey widgets
     if canvas is not None:
-        canvas.get_tk_widget().destroy()    
+        canvas.get_tk_widget().destroy()
 
     # Load survey data from the JSON file
     try:
@@ -385,21 +385,39 @@ def show_data():
         global canvas
         if canvas is not None:
             canvas.get_tk_widget().destroy()
+
+        # Create a list of all months from January to December
+        all_months = list(range(1, 13))
+        month_names = [calendar.month_abbr[month] for month in all_months]  # Use month abbreviations
+
         # Extract months and counts for plotting
-        months = list(month_counts.keys())
-        month_names = [calendar.month_name[month] for month in months]
-        satisfied_counts = [month_counts[month]['Satisfied'] for month in months]
-        unsatisfied_counts = [month_counts[month]['Unsatisfied'] for month in months]
+        month_counts = {}
+        for survey in survey_data:
+            date_str = survey['date']
+            date = datetime.datetime.strptime(date_str, '%Y-%m-%d')
+            month = date.month
+            if month not in month_counts:
+                month_counts[month] = {'Satisfied': 0, 'Unsatisfied': 0}
+            answers = survey['answers']
+            for answer in answers.values():
+                if answer == 'Satisfied':
+                    month_counts[month]['Satisfied'] += 1
+                elif answer == 'Unsatisfied':
+                    month_counts[month]['Unsatisfied'] += 1
+
+        # Find the index of the selected month
+        selected_month_index = datetime.datetime.now().month - 1
 
         # Plot the bar graph by month
         plt.figure(figsize=(8, 6))
-        x_pos = np.arange(len(months))
+        x_pos = np.arange(len(all_months))
+        satisfied_counts = [month_counts.get(month, {'Satisfied': 0})['Satisfied'] for month in all_months]
+        unsatisfied_counts = [month_counts.get(month, {'Unsatisfied': 0})['Unsatisfied'] for month in all_months]
         plt.bar(x_pos - 0.2, satisfied_counts, 0.4, label='Satisfied', color='#00b7ff')
         plt.bar(x_pos + 0.2, unsatisfied_counts, 0.4, label='Unsatisfied', color='#ff2929')
         plt.xticks(x_pos, month_names)
-
         plt.xlabel('Month')
-        plt.ylabel('Number of Surveys')
+        plt.ylabel('Number of People')
         plt.title('Customer Satisfaction by Month')
         plt.legend()
 
@@ -408,6 +426,7 @@ def show_data():
         canvas.draw()
         canvas.get_tk_widget().pack(fill=BOTH, expand=True)
         plt.close()
+
 
     def plot_data_by_week(month):
         global canvas
@@ -430,7 +449,7 @@ def show_data():
         plt.xticks(x_pos, week_names)
 
         plt.xlabel('Week')
-        plt.ylabel('Number of Surveys')
+        plt.ylabel('Number of People')
         plt.title('Customer Satisfaction by Week - {}'.format(calendar.month_name[month]))
         plt.legend()
 
@@ -461,6 +480,7 @@ def show_data():
     elif current_view == 'week':
         canvas.mpl_connect('button_press_event', on_week_click)
 
+
 def camera_loop():
     global survey_done
     classifier = load_model(r'D:\CODES\satis-face-tion\ai_trained_model\model.h5')
@@ -471,15 +491,15 @@ def camera_loop():
     messagebox.showinfo("Camera Started", "Camera is Now Enabled!")
 
     json_data = []  # Initialize empty JSON data list
+    max_id = 0  # Initialize the maximum ID number
 
     # Check if JSON file exists
     if os.path.exists('facial_recognition_result.json'):
         # Load existing data from JSON file
         with open('facial_recognition_result.json', 'r') as json_file:
             json_data = json.load(json_file)
-
-    # Determine the maximum ID value in existing data
-    max_id = max([data['id'] for data in json_data]) if json_data else 0
+            # Find the maximum ID value in existing data
+            max_id = max([data['id'] for data in json_data]) if json_data else 0
 
     label = ''  # Initialize label variable outside the loop
 
@@ -512,13 +532,14 @@ def camera_loop():
                     labels.append(label)
 
         if survey_done:
-            
-            dateImage = datetime.datetime.now().strftime("%B %d, %Y")
-            # Increment the maximum ID value
-            max_id += 1
+            current_date = datetime.date.today().strftime("%B %d, %Y")  # Format current date as "June 15, 2023"
+            id_number = max_id + 1  # Increment the maximum ID value
 
-            # Save the image to a folder with the incremented file name
-            image_path = os.path.join(".", "user_facial_images", f"{dateImage}.jpg")
+            # Generate the new file name
+            image_file_name = f"Survey #{id_number} - {current_date}.jpg"
+
+            # Save the image to a folder with the new file name
+            image_path = os.path.join(".", "user_facial_images", image_file_name)
 
             if labels:
                 label = labels[-1]  # Take the label from the last detected face
@@ -531,9 +552,25 @@ def camera_loop():
 
                 # Add label to the captured image with background
                 text_width, text_height = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 1, 2)[0]
-                cv2.rectangle(frame_with_square, (x, y - text_height - 30),
-                              (x + text_width + 20, y - 10), (0, 255, 255), cv2.FILLED)  # Set background color to yellow
-                cv2.putText(frame_with_square, label, (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 2, cv2.LINE_AA)  # Set text color to black and font family to Arial
+                margin = 10  # Set the desired margin size
+                label_box_height = text_height + 2 * margin
+
+                # Calculate the coordinates for the label background rectangle
+                label_box_x1 = x
+                label_box_y1 = y - label_box_height - margin
+                label_box_x2 = x + text_width + 2 * margin
+                label_box_y2 = y - margin
+
+                # Draw the background rectangle for the label
+                cv2.rectangle(frame_with_square, (label_box_x1, label_box_y1), (label_box_x2, label_box_y2), (0, 255, 255), cv2.FILLED)  # Set background color to yellow
+
+                # Calculate the coordinates for the text position
+                text_x = label_box_x1 + margin
+                text_y = label_box_y2 - margin
+
+                # Draw the text label
+                cv2.putText(frame_with_square, label, (text_x, text_y), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 2, cv2.LINE_AA)  # Set text color to black and font family to Arial
+
 
                 # Save the image with the label and square indicator
                 cv2.imwrite(image_path, frame_with_square)
@@ -541,13 +578,16 @@ def camera_loop():
                 date = str(datetime.date.today())
                 # Create a new data entry with the incremented ID, label, and date
                 data = {
-                    "id": max_id,
+                    "id": id_number,
                     "label": label,
                     "date": date
                 }
 
                 # Append the new data to the JSON data list
                 json_data.append(data)
+
+                # Update the maximum ID value
+                max_id = id_number
 
                 # Save the updated JSON data to the file
                 with open('facial_recognition_result.json', 'w') as json_file:
