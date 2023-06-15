@@ -26,7 +26,6 @@ main.title("satisFACEtion")
 
 # Set window size
 main.geometry("1360x768")
-# main.eval('tk::PlaceWindow . center')
 
 # Configure main window background color
 main.configure(background="white", padx=0, pady=0)
@@ -68,19 +67,7 @@ def welcome_page():
     # Configure the image label to display the resized image
     image_label.config(image=photo)
     image_label.image = photo  # Store a reference to the image to prevent garbage collection
-    
-        # Create a Label widget with absolute positioning
-    # label = Label(content_frame, font=("Segoe UI Semibold", 28), bg="orange", fg="white", pady=5, padx=10, text="Good Day Customer!")
-    # label.place(x=50, y=50)  # Adjust the coordinates as needed
-    
-    #     # Create a Label widget with absolute positioning
-    # label2 = Label(content_frame, font=("Segoe UI Semibold", 14), bg="orange", fg="white", pady=5, padx=10, text="We're curious about how  you felt dining in Mukbang Ta Ja.")
-    # label2.place(x=50, y=170)  # Adjust the coordinates as needed
-    
-    #         # Create a Label widget with absolute positioning
-    # label3 = Label(content_frame, font=("Segoe UI Semibold", 14), bg="orange", fg="white", pady=5, padx=10, text="Feel Free to share your satisfaction with us so we can improve!")
-    # label3.place(x=50, y=209)  # Adjust the coordinates as needed
-    
+
     # Create a Button widget with absolute positioning
     button = Button(content_frame, command=show_feedback,text="GIVE FEEDBACK", font=("Segoe UI Semibold", 13), bg="white", fg="orange", relief="flat", borderwidth=0, padx=10, pady=5, cursor="hand2")
     button.place(x=50, y=300)  # Adjust the coordinates as needed
@@ -207,9 +194,6 @@ def show_feedback():
         if satisfied4.get() == 0 and unsatisfied4.get() == 0:
             return False
         return True
-
-    # Global variable to store the reference to the PhotoImage object
-    completion_photo = None
 
     def submit_survey():
         global survey_done
@@ -371,13 +355,7 @@ def show_data():
         if view == 'month':
             plot_data_by_week(data)
             current_view = 'week'
-        elif view == 'week':
-            month = data[0]
-            selected_week = data[1]
-            plot_data_by_day(month, selected_week)
-            current_view = 'day'
 
-    
     # Create a dictionary to store the counts for each month, week, and day
     month_counts = defaultdict(lambda: {'Satisfied': 0, 'Unsatisfied': 0})
     # Create a dictionary to store the counts for each month, week, and day
@@ -462,40 +440,6 @@ def show_data():
         canvas.get_tk_widget().pack(fill=BOTH, expand=True)
         plt.close()
 
-
-
-    def plot_data_by_day(month, week):
-        global canvas
-        if canvas is not None:
-            canvas.get_tk_widget().destroy()
-
-        week_data = week_counts[month][week]
-
-        # Extract days and counts for plotting
-        days = list(week_data.keys())
-        day_names = ['Day {}'.format(day) for day in days]
-        satisfied_counts = [week_data[day]['Satisfied'] for day in days]
-        unsatisfied_counts = [week_data[day]['Unsatisfied'] for day in days]
-
-        # Plot the bar graph by day
-        plt.figure(figsize=(8, 6))
-        x_pos = np.arange(len(days))
-        plt.bar(x_pos - 0.2, satisfied_counts, 0.4, label='Satisfied', color='#00b7ff')
-        plt.bar(x_pos + 0.2, unsatisfied_counts, 0.4, label='Unsatisfied', color='#ff2929')
-        plt.xticks(x_pos, day_names)
-
-        plt.xlabel('Day')
-        plt.ylabel('Number of Surveys')
-        plt.title('Customer Satisfaction by Day - Week {}'.format(week))
-        plt.legend()
-
-        # Create a Tkinter canvas to display the plot
-        canvas = FigureCanvasTkAgg(plt.gcf(), master=content_frame)
-        canvas.draw()
-        canvas.get_tk_widget().pack(fill=BOTH, expand=True)
-        plt.close()
-
-
     def on_month_click(event):
         if event.xdata is not None:
             selected_month = int(event.xdata) + 1
@@ -568,11 +512,13 @@ def camera_loop():
                     labels.append(label)
 
         if survey_done:
+            
+            dateImage = datetime.datetime.now().strftime("%B %d, %Y")
             # Increment the maximum ID value
             max_id += 1
 
             # Save the image to a folder with the incremented file name
-            image_path = os.path.join(".", "user_facial_images", f"User Facial Expression - Survey #{max_id}.jpg")
+            image_path = os.path.join(".", "user_facial_images", f"{dateImage}.jpg")
 
             if labels:
                 label = labels[-1]  # Take the label from the last detected face
@@ -592,8 +538,8 @@ def camera_loop():
                 # Save the image with the label and square indicator
                 cv2.imwrite(image_path, frame_with_square)
 
-                # Create a new data entry with the incremented ID, label, and date
                 date = str(datetime.date.today())
+                # Create a new data entry with the incremented ID, label, and date
                 data = {
                     "id": max_id,
                     "label": label,
@@ -665,127 +611,7 @@ def show_satisfaction_data():
     remove_survey_widgets()  # Remove any existing survey widgets
     if canvas is not None:
         canvas.get_tk_widget().destroy()
-
-    # Load survey data from the JSON file
-    try:
-        with open("survey_answer.json", "r") as file:
-            survey_data = json.load(file)
-    except (FileNotFoundError, json.JSONDecodeError):
-        messagebox.showerror("Error", "Failed to load survey data.")
-        return
-
-    if not survey_data:
-        messagebox.showinfo("No Data", "No survey data available.")
-        return
-
-    # Create a dictionary to store the counts for each month and week
-    month_counts = defaultdict(lambda: {'Satisfied': 0, 'Unsatisfied': 0})
-    week_counts = defaultdict(lambda: defaultdict(lambda: {'Satisfied': 0, 'Unsatisfied': 0}))
-
-    # Process survey data and count satisfied/unsatisfied customers by month and week
-    for entry in survey_data:
-        date = entry.get('date')
-        month = datetime.datetime.strptime(date, '%Y-%m-%d').strftime('%B')  # Convert month to word format
-        week = str(datetime.datetime.strptime(date, '%Y-%m-%d').date().isocalendar()[1])  # Convert week to string key
-        answers = entry.get('answers')
-        for question, response in answers.items():
-            if response == 'Satisfied':
-                month_counts[month]['Satisfied'] += 1
-                week_counts[month][week]['Satisfied'] += 1
-            elif response == 'Unsatisfied':
-                month_counts[month]['Unsatisfied'] += 1
-                week_counts[month][week]['Unsatisfied'] += 1
-
-    # Define the plot functions
-    def plot_data_by_month():
-        global canvas
-        if canvas is not None:
-            canvas.get_tk_widget().destroy()
-
-        # Extract months and counts for plotting
-        months = list(month_counts.keys())
-        satisfied_counts = [month_counts[month]['Satisfied'] for month in months]
-        unsatisfied_counts = [month_counts[month]['Unsatisfied'] for month in months]
-
-        # Plot the bar graph by month
-        plt.figure(figsize=(8, 6))
-        x_pos = np.arange(len(months))
-        plt.bar(x_pos - 0.2, satisfied_counts, 0.4, label='Satisfied', color='#00b7ff')
-        plt.bar(x_pos + 0.2, unsatisfied_counts, 0.4, label='Unsatisfied', color='#ff2929')
-        plt.xticks(x_pos, months)
-
-        plt.xlabel('Month')
-        plt.ylabel('Number of Person')
-        plt.title('Customer Satisfaction by Month')
-        plt.legend()
-
-        # Create a Tkinter canvas to display the plot
-        canvas = FigureCanvasTkAgg(plt.gcf(), master=content_frame)
-        canvas.draw()
-        canvas.get_tk_widget().pack(fill=BOTH, expand=True)
-        plt.close()
-
-    def plot_data_by_week(month):
-        global canvas
-        if canvas is not None:
-            canvas.get_tk_widget().destroy()
-
-        month_data = week_counts[month]
-
-        # Extract weeks and counts for plotting
-        weeks = list(month_data.keys())
-        satisfied_counts = [month_data[week]['Satisfied'] for week in weeks]
-        unsatisfied_counts = [month_data[week]['Unsatisfied'] for week in weeks]
-
-        # Plot the bar graph by week
-        plt.figure(figsize=(8, 6))
-        x_pos = np.arange(len(weeks))
-        plt.bar(x_pos - 0.2, satisfied_counts, 0.4, label='Satisfied', color='#00b7ff')
-        plt.bar(x_pos + 0.2, unsatisfied_counts, 0.4, label='Unsatisfied', color='#ff2929')
-        plt.xticks(x_pos, weeks)
-
-        plt.xlabel('Week')
-        plt.ylabel('Number of Person')
-        plt.title('Customer Satisfaction by Week - {}'.format(calendar.month_name[month]))
-        plt.legend()
-
-        # Create a Tkinter canvas to display the plot
-        canvas = FigureCanvasTkAgg(plt.gcf(), master=content_frame)
-        canvas.draw()
-        canvas.get_tk_widget().pack(fill=BOTH, expand=True)
-        plt.close()
-
-    def on_month_click(event):
-        if event.xdata is not None:
-            selected_month = plt.xticks()[0][int(event.xdata)]
-            update_plot(view=current_view, data=selected_month)
-
-    def on_week_click(event):
-        if event.xdata is not None:
-            selected_week = int(event.xdata) + 1
-            if 1 <= selected_week <= 53:
-                update_plot(view=current_view, data=(current_month, selected_week))
-
-    def update_plot(view, data):
-        global current_view, canvas, current_month
-
-        if view == 'month':
-            current_month = data
-            plot_data_by_week(data)
-            current_view = 'week'
-
-
-    # Create a global variable to keep track of the current view
-    current_view = 'month'
-    current_month = None
-    plot_data_by_month()
-
-    # Add a click event handler to the canvas to capture month/week clicks
-    if current_view == 'month':
-        canvas.mpl_connect('button_press_event', on_month_click)
-    elif current_view == 'week':
-        canvas.mpl_connect('button_press_event', on_week_click)
-    
+  
 # Create a frame for the stacked buttons
 button_frame = Frame(main, bg="#302d2d")
 button_frame.grid(row=0, column=0, padx=0, pady=0, sticky="ns")
