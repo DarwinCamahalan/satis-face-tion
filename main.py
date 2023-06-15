@@ -4,6 +4,7 @@ import datetime
 import calendar
 from PIL import Image, ImageTk
 import matplotlib.pyplot as plt
+import re
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from collections import defaultdict
 from collections import Counter
@@ -657,11 +658,11 @@ def show_satisfaction_data():
         with open("facial_recognition_result.json", "r") as file:
             survey_data = json.load(file)
     except (FileNotFoundError, json.JSONDecodeError):
-        tk.messagebox.showerror("Error", "Failed to load survey data.")
+        messagebox.showerror("Error", "Failed to load survey data.")
         return
 
     if not survey_data:
-        tk.messagebox.showinfo("No Data", "No survey data available.")
+        messagebox.showinfo("No Data", "No survey data available.")
         return
 
     current_view = 'month'
@@ -767,7 +768,62 @@ def show_satisfaction_data():
         canvas.mpl_connect('button_press_event', on_month_click)
     elif current_view == 'week':
         canvas.mpl_connect('button_press_event', on_week_click)
-  
+        
+def facial_images():
+    global content_frame, survey_widgets, canvas, current_view
+
+    remove_survey_widgets()
+
+    if canvas is not None:
+        canvas.get_tk_widget().destroy()
+
+    scrollable_frame = Frame(content_frame)
+    scrollable_frame.pack(fill=BOTH, expand=True)
+
+    canvas2 = Canvas(scrollable_frame)
+    canvas2.pack(side=LEFT, fill=BOTH, expand=True)
+
+    scrollbar = Scrollbar(scrollable_frame, orient=VERTICAL, command=canvas2.yview)
+    scrollbar.pack(side=RIGHT, fill=Y)
+
+    canvas2.configure(yscrollcommand=scrollbar.set)
+    canvas2.bind('<Configure>', lambda e: canvas2.configure(scrollregion=canvas2.bbox('all')))
+
+    inner_frame = Frame(canvas2)
+    canvas2.create_window((0, 0), window=inner_frame, anchor='nw')
+
+    folder_path = './user_facial_images'
+    image_files = os.listdir(folder_path)
+
+    image_files.sort(key=lambda x: int(re.search(r'Survey #(\d+)', x).group(1)))
+
+    num_images = len(image_files)
+    num_columns = 5
+    num_rows = (num_images + num_columns - 1) // num_columns
+
+    for i, file_name in enumerate(image_files):
+        image_path = os.path.join(folder_path, file_name)
+        image = Image.open(image_path)
+        image = image.resize((200, 200))  # Adjust the size as needed
+
+        photo = ImageTk.PhotoImage(image)
+        label = Label(inner_frame, image=photo)
+        label.image = photo
+
+        row = i // num_columns
+        col = i % num_columns
+
+        label.grid(row=row, column=col, padx=10, pady=(30, 2))
+
+        file_label = Label(inner_frame, text=file_name, wraplength=180, justify=CENTER)
+        file_label.grid(row=row + 1, column=col, pady=(0, 10), sticky='n')
+
+    canvas2.update_idletasks()
+    canvas2.config(scrollregion=canvas2.bbox('all'))
+
+    survey_widgets.append(scrollable_frame)
+
+
 # Create a frame for the stacked buttons
 button_frame = Frame(main, bg="#302d2d")
 button_frame.grid(row=0, column=0, padx=0, pady=0, sticky="ns")
@@ -798,7 +854,11 @@ satisfaction_analytics_btn.pack(padx=(17, 25), pady=20, fill="x")
 
 satisfaction_data_btn = Button(button_frame, text="Satisfaction Data", command=show_satisfaction_data, relief="flat", cursor="hand2", font=font_style)
 satisfaction_data_btn.configure(bg="#302d2d", fg="white", highlightbackground="white", borderwidth=0, anchor="w")
-satisfaction_data_btn.pack(padx=(17, 25), pady=(20, 40), fill="x")
+satisfaction_data_btn.pack(padx=(17, 25), pady=20, fill="x")
+
+facial_images_btn = Button(button_frame, text="Facial Recognition Images", command=facial_images, relief="flat", cursor="hand2", font=font_style)
+facial_images_btn.configure(bg="#302d2d", fg="white", highlightbackground="white", borderwidth=0, anchor="w")
+facial_images_btn.pack(padx=(17, 25), pady=(20, 40), fill="x")
 
 # Show the initial content (Welcome Page)
 welcome_page()
