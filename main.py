@@ -6,10 +6,15 @@ from PIL import Image, ImageTk
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from collections import defaultdict
+import threading
 import numpy as np
+import cv2
+import os
+from keras.models import load_model
 from tkinter import messagebox
 
 canvas = None 
+survey_done = False
 
 # Set font for the whole application
 font_style = ("Segoe UI Semibold", 11)
@@ -122,7 +127,7 @@ def remove_survey_widgets():
         widget.destroy()
 
 def show_feedback():
-    global content_frame, survey_widgets, removeGraph, canvas  # Declare content_frame and survey_widgets as global variables
+    global content_frame, survey_widgets, survey_done, canvas  # Declare content_frame and survey_widgets as global variables
     remove_survey_widgets()  # Remove any existing survey widgets
     if canvas is not None:
         canvas.get_tk_widget().destroy()
@@ -207,10 +212,12 @@ def show_feedback():
     completion_photo = None
 
     def submit_survey():
+        global survey_done
         if validate_survey():
             # Prepare the survey data
             feedback_btn.configure(bg="#302d2d", fg="white", highlightbackground="white", borderwidth=0, anchor="w")
             feedback_btn.pack(padx=(17, 10), pady=20, fill="x")
+            survey_done = True
             survey_data = {
                 "date": str(datetime.date.today()),
                 "id": get_next_survey_id(),
@@ -476,11 +483,110 @@ def show_data():
     elif current_view == 'week':
         canvas.mpl_connect('button_press_event', on_week_click)
 
+def camera_loop():
+    global survey_done
+    classifier = load_model(r'D:\CODES\satis-face-tion\ai_trained_model\model.h5')
+    emotion_labels = ['Unsatisfied', 'Unsatisfied', 'Satisfied', 'Satisfied', 'Unsatisfied', 'Satisfied']
+
+    cap = cv2.VideoCapture(0)
+    start_btn.config(state=DISABLED, text="STARTED",)
+    messagebox.showinfo("Camera Started", "Camera is Now Enabled!")
+
+    json_data = []  # Initialize empty JSON data list
+
+    # Check if JSON file exists
+    if os.path.exists('facial_recognition_result.json'):
+        # Load existing data from JSON file
+        with open('facial_recognition_result.json', 'r') as json_file:
+            json_data = json.load(json_file)
+
+    # Determine the maximum ID value in existing data
+    max_id = max([data['id'] for data in json_data]) if json_data else 0
+    
+    x, y, w, h = 0, 0, 0, 0  # Initialize variables
+
+    label = ''  # Initialize label variable outside the loop
+
+    while True:
+        ret, frame = cap.read()
+        labels = []
+
+        try:
+            gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        except cv2.error as e:
+            print("")
+
+        face_classifier = cv2.CascadeClassifier(r'D:\CODES\satis-face-tion\ai_trained_model\haarcascades\haarcascade_frontalface_default.xml')
+        faces = face_classifier.detectMultiScale(gray, scaleFactor=1.3, minNeighbors=5)
+
+        for (x, y, w, h) in faces:
+            cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 255), 2)
+            roi_gray = gray[y:y+h, x:x+w]
+            roi_gray = cv2.resize(roi_gray, (48, 48), interpolation=cv2.INTER_AREA)
+
+            if np.sum([roi_gray]) != 0:
+                roi = roi_gray.astype('float') / 255.0
+                roi = np.expand_dims(roi, axis=0)
+                prediction = classifier.predict(roi)[0]
+                label = emotion_labels[prediction.argmax()]
+                label_position = (x, y)
+                cv2.putText(frame, label, label_position, cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+
+        if survey_done:
+            # Increment the maximum ID value
+            max_id += 1
+
+            # Save the image to a folder with the incremented file name
+            image_path = os.path.join(".", "user_facial_images", f"captured_image_{max_id}.jpg")
+
+            # Create a copy of the frame to draw the square indicator
+            frame_with_square = frame.copy()
+
+            # Calculate the coordinates for a larger square indicator
+            x -= int(w * 0.1)
+            y -= int(h * 0.1)
+            w = int(w * 1.2)
+            h = int(h * 1.2)
+
+            # Add label to the captured image
+            cv2.putText(frame_with_square, label, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+
+            # Draw the square indicator on the frame with the label
+            cv2.rectangle(frame_with_square, (x, y), (x+w, y+h), (0, 255, 255), 2)
+
+            # Save the image with the label and square indicator
+            cv2.imwrite(image_path, frame_with_square)
+
+            # Create a new data entry with the incremented ID, label, and date
+            date = str(datetime.date.today())
+            data = {
+                "id": max_id,
+                "label": label,
+                "date": date
+            }
+
+            # Append the new data to the JSON data list
+            json_data.append(data)
+
+            # Save the updated JSON data to the file
+            with open('facial_recognition_result.json', 'w') as json_file:
+                json.dump(json_data, json_file)
+
+            # Check satisfaction level and save image
+            if label == 'Satisfied':
+                print("Satisfied!")
+            else:
+                print("Unsatisfied!")
+
+            survey_done = False
+
+
 def show_start():
-    global content_frame, survey_widgets, canvas  # Declare content_frame and survey_widgets as global variables
-    remove_survey_widgets()  # Remove any existing survey widgets
-    if canvas is not None:
-        canvas.get_tk_widget().destroy()
+    global start_btn
+    threading.Thread(target=camera_loop).start()
+    messagebox.showinfo("Starting Camera", "Camera Starting, Please Wait.")
+    # Disable the start button
+    start_btn.config(state=DISABLED, text="Please Wait...",)
     
 def show_satisfaction_analytics():
     global content_frame, survey_widgets, canvas  # Declare content_frame and survey_widgets as global variables
