@@ -499,8 +499,6 @@ def camera_loop():
 
     # Determine the maximum ID value in existing data
     max_id = max([data['id'] for data in json_data]) if json_data else 0
-    
-    x, y, w, h = 0, 0, 0, 0  # Initialize variables
 
     label = ''  # Initialize label variable outside the loop
 
@@ -516,64 +514,67 @@ def camera_loop():
         face_classifier = cv2.CascadeClassifier(r'D:\CODES\satis-face-tion\ai_trained_model\haarcascades\haarcascade_frontalface_default.xml')
         faces = face_classifier.detectMultiScale(gray, scaleFactor=1.3, minNeighbors=5)
 
-        for (x, y, w, h) in faces:
-            cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 255), 2)
-            roi_gray = gray[y:y+h, x:x+w]
+        if len(faces) > 0:
+            x, y, w, h = faces[-1]  # Take the last detected face's coordinates
+
+            cv2.rectangle(frame, (x, y), (x + w, y + h), (28, 252, 3), 3)  # Set color to yellow and thickness to 3
+            roi_gray = gray[y:y + h, x:x + w]
             roi_gray = cv2.resize(roi_gray, (48, 48), interpolation=cv2.INTER_AREA)
 
             if np.sum([roi_gray]) != 0:
                 roi = roi_gray.astype('float') / 255.0
                 roi = np.expand_dims(roi, axis=0)
                 prediction = classifier.predict(roi)[0]
-                label = emotion_labels[prediction.argmax()]
-                label_position = (x, y)
-                cv2.putText(frame, label, label_position, cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+                if 0 <= prediction.argmax() < len(emotion_labels):  # Check if the predicted value is within range
+                    label = emotion_labels[prediction.argmax()]
+                    label_position = (x, y - 10)
+                    labels.append(label)
 
         if survey_done:
             # Increment the maximum ID value
             max_id += 1
 
             # Save the image to a folder with the incremented file name
-            image_path = os.path.join(".", "user_facial_images", f"captured_image_{max_id}.jpg")
+            image_path = os.path.join(".", "user_facial_images", f"User Facial Expression - Survey #{max_id}.jpg")
 
-            # Create a copy of the frame to draw the square indicator
-            frame_with_square = frame.copy()
+            if labels:
+                label = labels[-1]  # Take the label from the last detected face
 
-            # Calculate the coordinates for a larger square indicator
-            x -= int(w * 0.1)
-            y -= int(h * 0.1)
-            w = int(w * 1.2)
-            h = int(h * 1.2)
+                # Create a copy of the frame to draw the square indicator
+                frame_with_square = frame.copy()
 
-            # Add label to the captured image
-            cv2.putText(frame_with_square, label, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+                # Draw the square indicator on the frame
+                cv2.rectangle(frame_with_square, (x, y), (x + w, y + h), (0, 255, 255), 3)  # Set color to yellow and thickness to 3
 
-            # Draw the square indicator on the frame with the label
-            cv2.rectangle(frame_with_square, (x, y), (x+w, y+h), (0, 255, 255), 2)
+                # Add label to the captured image with background
+                text_width, text_height = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 1, 2)[0]
+                cv2.rectangle(frame_with_square, (x, y - text_height - 30),
+                              (x + text_width + 20, y - 10), (0, 255, 255), cv2.FILLED)  # Set background color to yellow
+                cv2.putText(frame_with_square, label, (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 2, cv2.LINE_AA)  # Set text color to black and font family to Arial
 
-            # Save the image with the label and square indicator
-            cv2.imwrite(image_path, frame_with_square)
+                # Save the image with the label and square indicator
+                cv2.imwrite(image_path, frame_with_square)
 
-            # Create a new data entry with the incremented ID, label, and date
-            date = str(datetime.date.today())
-            data = {
-                "id": max_id,
-                "label": label,
-                "date": date
-            }
+                # Create a new data entry with the incremented ID, label, and date
+                date = str(datetime.date.today())
+                data = {
+                    "id": max_id,
+                    "label": label,
+                    "date": date
+                }
 
-            # Append the new data to the JSON data list
-            json_data.append(data)
+                # Append the new data to the JSON data list
+                json_data.append(data)
 
-            # Save the updated JSON data to the file
-            with open('facial_recognition_result.json', 'w') as json_file:
-                json.dump(json_data, json_file)
+                # Save the updated JSON data to the file
+                with open('facial_recognition_result.json', 'w') as json_file:
+                    json.dump(json_data, json_file)
 
-            # Check satisfaction level and save image
-            if label == 'Satisfied':
-                print("Satisfied!")
-            else:
-                print("Unsatisfied!")
+                # Check satisfaction level and save image
+                if label == 'Satisfied':
+                    print("Satisfied!")
+                else:
+                    print("Unsatisfied!")
 
             survey_done = False
 
