@@ -14,7 +14,6 @@ import os
 from keras.models import load_model
 from tkinter import messagebox
 
-
 canvas = None 
 survey_done = False
 
@@ -43,7 +42,6 @@ content_frame.grid(row=0, column=1, padx=0, pady=0, sticky="nsew")
 main.grid_columnconfigure(0, weight=0)
 main.grid_columnconfigure(1, weight=1)
 main.grid_rowconfigure(0, weight=1)
-
 
 def welcome_page():
     global content_frame, survey_widgets, canvas  # Declare content_frame and survey_widgets as global variables
@@ -133,69 +131,69 @@ def show_feedback():
     remove_survey_widgets()  # Remove any existing survey widgets
     if canvas is not None:
         canvas.get_tk_widget().destroy()
-        
+
     feedback_btn.configure(bg="white", fg="black", highlightbackground="white", borderwidth=0, anchor="w")
-    feedback_btn.pack(padx=(25, 10), pady=20 , fill="x")
+    feedback_btn.pack(padx=(25, 10), pady=20, fill="x")
 
     # Create the survey questions and radio buttons
     question1_label = Label(content_frame, text="1. Was the service fast and friendly?", font=font_style, bg="white")
-    question1_label.pack(anchor="w", pady=(20, 10))
+    question1_label.pack(anchor="w", pady=(20, 10), padx=20)
     question1_label.configure(pady=5)  # Add letter spacing of 2 pixels
     survey_widgets.append(question1_label)
-    
+
     satisfied1 = IntVar()
     satisfied1_radiobutton = Radiobutton(content_frame, text="Satisfied", bg="white", variable=satisfied1, value=1, font=font_style, command=lambda: unsatisfied1.set(0))
-    satisfied1_radiobutton.pack(anchor="w")
+    satisfied1_radiobutton.pack(anchor="w", padx=20)
     survey_widgets.append(satisfied1_radiobutton)
 
     unsatisfied1 = IntVar()
     unsatisfied1_radiobutton = Radiobutton(content_frame, text="Unsatisfied", bg="white", variable=unsatisfied1, value=1, font=font_style, command=lambda: satisfied1.set(0))
-    unsatisfied1_radiobutton.pack(anchor="w", pady=(0, 20))
+    unsatisfied1_radiobutton.pack(anchor="w", pady=(0, 20), padx=20)
     survey_widgets.append(unsatisfied1_radiobutton)
 
     question2_label = Label(content_frame, text="2. Was your food fresh and tasty?", font=font_style, bg="white")
-    question2_label.pack(anchor="w", pady=(20, 10))
+    question2_label.pack(anchor="w", pady=(20, 10), padx=20)
     question2_label.configure(pady=5)  # Add letter spacing of 2 pixels
     survey_widgets.append(question2_label)
-    
+
     satisfied2 = IntVar()
     satisfied2_radiobutton = Radiobutton(content_frame, text="Satisfied", bg="white", variable=satisfied2, value=1, font=font_style, command=lambda: unsatisfied2.set(0))
-    satisfied2_radiobutton.pack(anchor="w")
+    satisfied2_radiobutton.pack(anchor="w", padx=20)
     survey_widgets.append(satisfied2_radiobutton)
 
     unsatisfied2 = IntVar()
     unsatisfied2_radiobutton = Radiobutton(content_frame, text="Unsatisfied", bg="white", variable=unsatisfied2, value=1, font=font_style, command=lambda: satisfied2.set(0))
-    unsatisfied2_radiobutton.pack(anchor="w", pady=(0, 20))
+    unsatisfied2_radiobutton.pack(anchor="w", pady=(0, 20), padx=20)
     survey_widgets.append(unsatisfied2_radiobutton)
 
     question3_label = Label(content_frame, text="3. Are you pleased with the quality of the meal?", font=font_style, bg="white")
-    question3_label.pack(anchor="w", pady=(20, 10))
+    question3_label.pack(anchor="w", pady=(20, 10), padx=20)
     question3_label.configure(pady=5)  # Add letter spacing of 2 pixels
     survey_widgets.append(question3_label)
 
     satisfied3 = IntVar()
     satisfied3_radiobutton = Radiobutton(content_frame, text="Satisfied", bg="white", variable=satisfied3, value=1, font=font_style, command=lambda: unsatisfied3.set(0))
-    satisfied3_radiobutton.pack(anchor="w")
+    satisfied3_radiobutton.pack(anchor="w", padx=20)
     survey_widgets.append(satisfied3_radiobutton)
 
     unsatisfied3 = IntVar()
     unsatisfied3_radiobutton = Radiobutton(content_frame, text="Unsatisfied", bg="white", variable=unsatisfied3, value=1, font=font_style, command=lambda: satisfied3.set(0))
-    unsatisfied3_radiobutton.pack(anchor="w", pady=(0, 20))
+    unsatisfied3_radiobutton.pack(anchor="w", pady=(0, 20), padx=20)
     survey_widgets.append(unsatisfied3_radiobutton)
 
     question4_label = Label(content_frame, text="4. Rate your overall satisfaction?", font=font_style, bg="white")
-    question4_label.pack(anchor="w", pady=(20, 10))
+    question4_label.pack(anchor="w", pady=(20, 10), padx=20)
     question4_label.configure(pady=5)  # Add letter spacing of 2 pixels
     survey_widgets.append(question4_label)
 
     satisfied4 = IntVar()
     satisfied4_radiobutton = Radiobutton(content_frame, text="Satisfied", bg="white", variable=satisfied4, value=1, font=font_style, command=lambda: unsatisfied4.set(0))
-    satisfied4_radiobutton.pack(anchor="w")
+    satisfied4_radiobutton.pack(anchor="w", padx=20)
     survey_widgets.append(satisfied4_radiobutton)
 
     unsatisfied4 = IntVar()
     unsatisfied4_radiobutton = Radiobutton(content_frame, text="Unsatisfied", bg="white", variable=unsatisfied4, value=1, font=font_style, command=lambda: satisfied4.set(0))
-    unsatisfied4_radiobutton.pack(anchor="w", pady=(0, 20))
+    unsatisfied4_radiobutton.pack(anchor="w", pady=(0, 20), padx=20)
     survey_widgets.append(unsatisfied4_radiobutton)
 
     # Function to validate the survey choices
@@ -350,7 +348,7 @@ def show_data():
     global content_frame, survey_widgets, canvas, current_view  # Declare content_frame, survey_widgets, and current_view as global variables
     remove_survey_widgets()  # Remove any existing survey widgets
     if canvas is not None:
-        canvas.get_tk_widget().destroy()
+        canvas.get_tk_widget().destroy()    
 
     # Load survey data from the JSON file
     try:
@@ -373,6 +371,11 @@ def show_data():
         if view == 'month':
             plot_data_by_week(data)
             current_view = 'week'
+        elif view == 'week':
+            month = data[0]
+            selected_week = data[1]
+            plot_data_by_day(month, selected_week)
+            current_view = 'day'
 
     
     # Create a dictionary to store the counts for each month, week, and day
@@ -418,7 +421,7 @@ def show_data():
         plt.xticks(x_pos, month_names)
 
         plt.xlabel('Month')
-        plt.ylabel('Number of Person')
+        plt.ylabel('Number of Surveys')
         plt.title('Customer Satisfaction by Month')
         plt.legend()
 
@@ -449,7 +452,7 @@ def show_data():
         plt.xticks(x_pos, week_names)
 
         plt.xlabel('Week')
-        plt.ylabel('Number of Person')
+        plt.ylabel('Number of Surveys')
         plt.title('Customer Satisfaction by Week - {}'.format(calendar.month_name[month]))
         plt.legend()
 
@@ -458,6 +461,40 @@ def show_data():
         canvas.draw()
         canvas.get_tk_widget().pack(fill=BOTH, expand=True)
         plt.close()
+
+
+
+    def plot_data_by_day(month, week):
+        global canvas
+        if canvas is not None:
+            canvas.get_tk_widget().destroy()
+
+        week_data = week_counts[month][week]
+
+        # Extract days and counts for plotting
+        days = list(week_data.keys())
+        day_names = ['Day {}'.format(day) for day in days]
+        satisfied_counts = [week_data[day]['Satisfied'] for day in days]
+        unsatisfied_counts = [week_data[day]['Unsatisfied'] for day in days]
+
+        # Plot the bar graph by day
+        plt.figure(figsize=(8, 6))
+        x_pos = np.arange(len(days))
+        plt.bar(x_pos - 0.2, satisfied_counts, 0.4, label='Satisfied', color='#00b7ff')
+        plt.bar(x_pos + 0.2, unsatisfied_counts, 0.4, label='Unsatisfied', color='#ff2929')
+        plt.xticks(x_pos, day_names)
+
+        plt.xlabel('Day')
+        plt.ylabel('Number of Surveys')
+        plt.title('Customer Satisfaction by Day - Week {}'.format(week))
+        plt.legend()
+
+        # Create a Tkinter canvas to display the plot
+        canvas = FigureCanvasTkAgg(plt.gcf(), master=content_frame)
+        canvas.draw()
+        canvas.get_tk_widget().pack(fill=BOTH, expand=True)
+        plt.close()
+
 
     def on_month_click(event):
         if event.xdata is not None:
