@@ -499,7 +499,7 @@ def show_data():
 
 def camera_loop():
     global survey_done, start_btn_clicked
-    classifier = load_model(r'D:\CODES\satis-face-tion\ai_trained_model\model.h5')
+    classifier = load_model(r'C:\Users\User\Desktop\satis-face-tion\ai_trained_model\model.h5')
     emotion_labels = ['Unsatisfied', 'Unsatisfied', 'Satisfied', 'Satisfied', 'Unsatisfied', 'Satisfied']
 
     cap = cv2.VideoCapture(0)
@@ -529,7 +529,7 @@ def camera_loop():
         except cv2.error as e:
             print("")
 
-        face_classifier = cv2.CascadeClassifier(r'D:\CODES\satis-face-tion\ai_trained_model\haarcascades\haarcascade_frontalface_default.xml')
+        face_classifier = cv2.CascadeClassifier(r'C:\Users\User\Desktop\satis-face-tion\ai_trained_model\haarcascades\haarcascade_frontalface_default.xml')
         faces = face_classifier.detectMultiScale(gray, scaleFactor=1.3, minNeighbors=5)
 
         if len(faces) > 0:
@@ -833,6 +833,8 @@ def facial_images():
 
         file_label = Label(inner_frame, text=file_name, wraplength=180, justify=CENTER)
         file_label.grid(row=row + 1, column=col, pady=(0, 10), sticky='n')
+
+    
 
     canvas2.update_idletasks()
     canvas2.config(scrollregion=canvas2.bbox('all'))
