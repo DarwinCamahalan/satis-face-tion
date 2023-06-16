@@ -93,7 +93,6 @@ def welcome_page():
     
     content_frame.bind("<Configure>", resize_image)
 
-# Function to get the next survey ID
 def get_next_survey_id():
     survey_data = []
     try:
@@ -500,6 +499,7 @@ def show_data():
 def camera_loop():
     global survey_done, start_btn_clicked
     classifier = load_model(r'C:\Users\User\Desktop\satis-face-tion\ai_trained_model\model.h5')
+    # classifier = load_model(r'D:\CODES\satis-face-tion\ai_trained_model\model.h5')
     emotion_labels = ['Unsatisfied', 'Unsatisfied', 'Satisfied', 'Satisfied', 'Unsatisfied', 'Satisfied']
 
     cap = cv2.VideoCapture(0)
@@ -530,6 +530,7 @@ def camera_loop():
             print("")
 
         face_classifier = cv2.CascadeClassifier(r'C:\Users\User\Desktop\satis-face-tion\ai_trained_model\haarcascades\haarcascade_frontalface_default.xml')
+        # face_classifier = cv2.CascadeClassifier(r'D:\CODES\satis-face-tion\ai_trained_model\haarcascades\haarcascade_frontalface_default.xml')
         faces = face_classifier.detectMultiScale(gray, scaleFactor=1.3, minNeighbors=5)
 
         if len(faces) > 0:
@@ -817,6 +818,21 @@ def facial_images():
     num_columns = 5
     num_rows = (num_images + num_columns - 1) // num_columns
 
+    def delete_image(image_path):
+        result = messagebox.askquestion("Delete Image", "Are you sure you want to delete this image?")
+        if result == 'yes':
+            os.remove(image_path)
+            # Update the image display after deletion
+            facial_images()
+
+    def hover_in(event, image_label, image_path):
+        event.widget.config(cursor="hand2")
+        event.widget.config(borderwidth=2, relief="solid", bd=1, fg="#880808", highlightbackground="#880808")
+
+    def hover_out(event, image_label, image_path):
+        event.widget.config(cursor="")
+        event.widget.config(borderwidth=0)
+
     for i, file_name in enumerate(image_files):
         image_path = os.path.join(folder_path, file_name)
         image = Image.open(image_path)
@@ -834,7 +850,10 @@ def facial_images():
         file_label = Label(inner_frame, text=file_name, wraplength=180, justify=CENTER)
         file_label.grid(row=row + 1, column=col, pady=(0, 10), sticky='n')
 
-    
+        # Bind the delete_image function to the label click event
+        label.bind("<Button-1>", lambda e, path=image_path: delete_image(path))
+        label.bind("<Enter>", lambda e, label=label, path=image_path: hover_in(e, label, path))
+        label.bind("<Leave>", lambda e, label=label, path=image_path: hover_out(e, label, path))
 
     canvas2.update_idletasks()
     canvas2.config(scrollregion=canvas2.bbox('all'))
